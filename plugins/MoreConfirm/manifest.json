@@ -1,0 +1,14 @@
+{
+    "name": "MoreConfirm",
+    "description": "Prompt comfirmations before making an irreversible actions.",
+    "authors": [
+        {
+            "name": "amsyarasyiq",
+            "id": "492949202121261067"
+        }
+    ],
+    "main": "src/index.ts",
+    "vendetta": {
+        "icon": "ic_checked"
+    }
+}

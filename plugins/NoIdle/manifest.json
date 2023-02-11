@@ -1,0 +1,14 @@
+{
+    "name": "NoIdle",
+    "description": "Prevent status from idling when Discord is in the background.",
+    "authors": [
+        {
+            "name": "amsyarasyiq",
+            "id": "492949202121261067"
+        }
+    ],
+    "main": "src/index.ts",
+    "vendetta": {
+        "icon": "StatusIdle"
+    }
+}

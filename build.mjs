@@ -1,19 +1,19 @@
-import { rollup } from "rollup";
-import { readFile, writeFile, readdir } from "fs/promises";
-import { createHash } from "crypto";
-import esbuild from "rollup-plugin-esbuild";
-import nodeResolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
+import nodeResolve from "@rollup/plugin-node-resolve";
+import { createHash } from "crypto";
+import { readdir, readFile, writeFile } from "fs/promises";
+import { rollup } from "rollup";
+import esbuild from "rollup-plugin-esbuild";
 
-for (let plug of await readdir("./plugins")) {
+for (const plug of await readdir("./plugins")) {
     const manifest = JSON.parse(await readFile(`./plugins/${plug}/manifest.json`));
-    const outName = manifest.main.split("/").reverse()[0];
-    const outPath = `./dist/${plug}/${outName}`;
+    const entry = "index.js";
+    const outPath = `./dist/${plug}/${entry}`;
 
     try {
         const bundle = await rollup({
             input: `./plugins/${plug}/${manifest.main}`,
-            onwarn: () => {},
+            onwarn: () => { },
             plugins: [
                 nodeResolve(),
                 commonjs(),
@@ -23,7 +23,7 @@ for (let plug of await readdir("./plugins")) {
                 })
             ],
         });
-    
+
         await bundle.write({
             file: outPath,
             globals(id) {
@@ -39,12 +39,12 @@ for (let plug of await readdir("./plugins")) {
             exports: "named",
         });
         await bundle.close();
-    
+
         const toHash = await readFile(outPath);
         manifest.hash = createHash("sha256").update(toHash).digest("hex");
-        manifest.main = outName;
+        manifest.main = entry;
         await writeFile(`./dist/${plug}/manifest.json`, JSON.stringify(manifest));
-    
+
         console.log(`Successfully built ${manifest.name}!`);
     } catch (e) {
         console.error("Failed to build plugin...", e);
