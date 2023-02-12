@@ -18,6 +18,7 @@ export default function Settings() {
 
     React.useEffect(() => {
         navigation.setOptions({
+            title: "Last.fm Configuration",
             headerRight: () => {
                 async function onPressCallback() {
                     for (const key in storage) {
