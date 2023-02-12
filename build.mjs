@@ -1,7 +1,8 @@
 /* eslint-disable indent */
 import commonjs from "@rollup/plugin-commonjs";
 import nodeResolve from "@rollup/plugin-node-resolve";
-import { readdirSync, readFileSync } from "fs";
+import { createHash } from "crypto";
+import { readdirSync, readFileSync, writeFileSync } from "fs";
 import { argv } from "process";
 import { watch } from "rollup";
 import esbuild from "rollup-plugin-esbuild";
@@ -61,10 +62,16 @@ for (const plug of plugin ? [plugin] : readdirSync("./plugins")) {
                     case "START":
                         process.stdout.write(`Building ${plug}... `);
                         break;
-                    case "BUNDLE_END":
+                    case "BUNDLE_END": {
                         console.log("\x1b[32m", `Succeed! (${event.duration}ms)`, "\x1b[0m");
+                        const toHash = readFileSync(outPath);
+                        manifest.hash = createHash("sha256").update(toHash).digest("hex");
+                        manifest.main = "index.js";
+                        writeFileSync(`./dist/${plug}/manifest.json`, JSON.stringify(manifest));
+
                         resolve();
                         break;
+                    }
                     case "ERROR":
                         console.error("\x1b[31m", "Failed! :(", "\x1b[0m");
                         console.error(event.error);
