@@ -83,11 +83,11 @@ export async function update() {
 
     if (!currentSettings.username) {
         showToast("Last.fm username is not set!", getAssetIDByName("Small"));
-        await flush(); // Flush as we always needs reinitialization
+        await flush(); // Flush as we always need reinitialization
         throw new Error("Username is not set");
     }
 
-    const lastTrack = await fetchLatestScrobble().catch(async (err) => {
+    const lastTrack = await fetchLatestScrobble().catch(async function (err) {
         verboseLog("--> An error occurred while fetching the last track, aborting...");
         await clearActivity().catch();
         throw err;
@@ -106,7 +106,7 @@ export async function update() {
     }
 
     const activity = {
-        name: currentSettings.appName || "Music",
+        name: currentSettings.appName || Constants.DEFAULT_APP_NAME,
         type: currentSettings.listeningTo ? 2 : 0,
         details: lastTrack.name,
         state: `by ${lastTrack.artist}`,
@@ -128,7 +128,7 @@ export async function update() {
         }
     }
 
-    const response = await sendRequest(activity).catch(async (err) => {
+    const response = await sendRequest(activity).catch(async function (err) {
         verboseLog("--> An error occurred while setting the activity");
         await clearActivity().catch();
         throw err;

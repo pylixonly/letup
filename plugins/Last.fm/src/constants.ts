@@ -1,4 +1,5 @@
-export default {
+const Constants = {
+    DEFAULT_APP_NAME: "Music",
     /** The application ID of the plugin */
     APPLICATION_ID: "1054951789318909972",
     /** Last.fm api key */
@@ -9,3 +10,5 @@ export default {
         "c6f59c1e5e7240a4c0d427abd71f3dbb",
     ]
 } as const;
+
+export default Constants;

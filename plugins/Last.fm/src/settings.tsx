@@ -5,6 +5,7 @@ import { getAssetIDByName } from "@vendetta/ui/assets";
 import { Forms } from "@vendetta/ui/components";
 
 import { currentSettings } from ".";
+import Constants from "./constants";
 import { flush, initialize } from "./utils";
 
 const { ScrollView, TouchableOpacity, Text } = ReactNative;
@@ -39,7 +40,7 @@ export default function Settings() {
                 value={settings.appName || undefined}
                 onChangeText={(value: string) => settings.appName = value.trim()}
                 title="Discord Application Name"
-                placeholder="Music"
+                placeholder={Constants.DEFAULT_APP_NAME}
                 returnKeyType="done"
             />
             <FormDivider />
