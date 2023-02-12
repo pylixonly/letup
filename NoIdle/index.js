@@ -1,0 +1,1 @@
+(function(e,t,l){"use strict";let o;var r={onLoad:()=>{t.logger.log("Starting NoIdle..."),o=t.patcher.before("dispatch",l.FluxDispatcher,([{type:n}])=>{if(n==="IDLE")return[{type:"IDLE",idle:!1}]})},onUnload:()=>{t.logger.log("Disabling NoIdle.."),o?.()}};return e.default=r,Object.defineProperty(e,"__esModule",{value:!0}),e})({},vendetta,vendetta.metro.common);
