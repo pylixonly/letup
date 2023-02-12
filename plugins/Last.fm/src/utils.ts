@@ -16,7 +16,10 @@ async function fetchLatestScrobble(): Promise<Track> {
         'extended': '1'
     }).toString();
 
-    const info = await fetch(`https://ws.audioscrobbler.com/2.0/?${params}`).then(x => x.json());
+    const info = await fetch(`https://ws.audioscrobbler.com/2.0/?${params}`).then(x => {
+        if (!x.ok) throw new Error(`Failed to fetch latest scrobble: ${x.status} ${x.statusText}`);
+        return x.json();
+    });
     const lastTrack = info.recenttracks?.track?.[0] || Promise.reject(info);
     return {
         name: lastTrack.name,
@@ -30,12 +33,13 @@ async function fetchLatestScrobble(): Promise<Track> {
     } as Track;
 }
 
-/** Currently ditches the default album covers 
+/** 
+ * Currently ditches the default album covers 
  * @param cover The album cover given by Last.fm
 */
 function handleAlbumCover(cover: string): string {
-    // If the cover is a default one, return null (empty)
-    if (Constants.DEFAULT_COVER_HASHES.some(x => cover.includes(x))) {
+    // If the cover is a default one, return null (remove the cover)
+    if (Constants.LFM_DEFAULT_COVER_HASHES.some(x => cover.includes(x))) {
         return null;
     }
     return cover;
@@ -98,7 +102,7 @@ export async function update() {
         return await clearActivity();
     }
 
-    verboseLog("--> Setting activity...");
+    verboseLog("--> Track fetched! Setting activity...");
 
     if (global.lastTrackUrl === lastTrack.url) {
         verboseLog("--> Last track is the same as the previous one, aborting...");
@@ -121,10 +125,10 @@ export async function update() {
         };
     }
 
-    if (lastTrack.albumArt) {
+    if (lastTrack.album) {
         activity.assets = {
             large_image: lastTrack.albumArt,
-            large_text: `on ${lastTrack.album}`,
+            large_text: `on ${lastTrack.album}`
         }
     }
 

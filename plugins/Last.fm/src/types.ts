@@ -42,7 +42,7 @@ type ResultActivity = {
 
 // The assets of the activity
 type ActivityAssets = {
-    large_image: string;
+    large_image?: string;
     large_text?: string;
 } | {
     small_image: string;
