@@ -1,6 +1,7 @@
-import { logger, patcher, plugin } from "@vendetta";
+import { patcher, plugin } from "@vendetta";
 import { findByProps, findByStoreName } from '@vendetta/metro';
 import { FluxDispatcher } from '@vendetta/metro/common';
+import Constants from "./constants";
 import Settings from "./settings";
 
 let stopped: Boolean,
@@ -8,25 +9,6 @@ let stopped: Boolean,
     updateInterval: NodeJS.Timer,
     lastTrackUrl: string,
     activityTypeUnpatch: () => void;
-
-const settings = plugin.storage as {
-    appName: string;
-    username: string;
-    showTimestamp: string;
-    timeInterval: number;
-    listeningTo: boolean;
-    verboseLogging: boolean;
-};
-
-// Constants for the API calls (perhaps these should be options?)
-const APPLICATION_ID = "1054951789318909972";
-const LFM_API_KEY = "615322f0047e12aedbc610d9d71f7430";
-
-// These are the default album covers that are used by Last.fm
-const DEFAULT_COVER_HASHES = [
-    "2a96cbd8b46e442fc41c2b86b821562f",
-    "c6f59c1e5e7240a4c0d427abd71f3dbb",
-];
 
 // Discord activity
 type Activity = {
@@ -73,17 +55,19 @@ type Track = {
     loved: boolean;
 }
 
+export const currentSettings = { ...plugin.storage } as PluginSettings;
+
 // Discord modules that we need
 const UserStore = findByStoreName("UserStore")
 const SET_ACTIVITY = findByProps('SET_ACTIVITY').SET_ACTIVITY;
 
-const verboseLog = (...message: any) => settings.verboseLogging && logger.log(...message);
+const verboseLog = (...message: any) => currentSettings.verboseLogging && console.log(...message);
 
 async function fetchCurrentScrobble(): Promise<Track> {
     const params = new URLSearchParams({
         'method': 'user.getrecenttracks',
-        'user': settings.username,
-        'api_key': LFM_API_KEY,
+        'user': currentSettings.username,
+        'api_key': Constants.LFM_API_KEY,
         'format': 'json',
         'limit': '1',
         'extended': '1'
@@ -106,7 +90,7 @@ async function fetchCurrentScrobble(): Promise<Track> {
 // Currently ditches the default album covers (they're ugly)
 // Might as well use Youtube as fallback too (soontm)
 function filterAlbumCover(cover: string): string {
-    if (DEFAULT_COVER_HASHES.some(x => cover.includes(x))) {
+    if (Constants.DEFAULT_COVER_HASHES.some(x => cover.includes(x))) {
         return null;
     }
     return cover;
@@ -133,24 +117,25 @@ async function sendRequest(activity: Activity): Promise<ResultActivity> {
         socket: {
             id: 120,
             application: {
-                id: APPLICATION_ID,
+                id: Constants.APPLICATION_ID,
                 name: activity?.name || "RichPresence"
             },
             transport: "ipc"
         },
         args: {
             pid: 120,
-            activity: activity && { ...activity }
+            activity: activity && { ...activity } || null
         }
     });
 }
 
 // Fetches the current scrobble and sets the activity
 // This is the main function that is called every 5 seconds (or whatever the user has set)
-async function update() {
+export async function update() {
     verboseLog("--> Fetching last track...");
     const lastTrack = await fetchCurrentScrobble().catch((err) => {
         verboseLog("--> An error occurred while fetching the last track, aborting...");
+        clearActivity();
         throw err;
     });
 
@@ -167,15 +152,15 @@ async function update() {
     }
 
     const activity = {
-        name: settings.appName || "Music",
-        type: settings.listeningTo ? 2 : 0,
+        name: currentSettings.appName || "Music",
+        type: currentSettings.listeningTo ? 2 : 0,
         details: lastTrack.name,
         state: `by ${lastTrack.artist}`,
     } as Activity;
 
     lastTrackUrl = lastTrack.url;
 
-    if (settings.showTimestamp) {
+    if (currentSettings.showTimestamp) {
         activity.timestamps = {
             start: Date.now() / 1000 | 0
         };
@@ -190,6 +175,7 @@ async function update() {
 
     const response = await sendRequest(activity).catch((err) => {
         verboseLog("--> An error occurred while setting the activity");
+        clearActivity();
         throw err;
     });
 
@@ -198,8 +184,17 @@ async function update() {
     return response;
 }
 
+// Stops everything
+export function flush(): Promise<ResultActivity> {
+    console.log("--> Flushing...");
+    lastActivity = null;
+    updateInterval && clearInterval(updateInterval);
+
+    return clearActivity();
+}
+
 // Initializes the plugin
-async function initialize() {
+export async function initialize() {
     console.log("--> Initializing...");
 
     stopped = false;
@@ -209,9 +204,13 @@ async function initialize() {
     if (updateInterval) clearInterval(updateInterval);
     if (lastActivity) await clearActivity();
 
-    update().catch(console.error);
-
     let tries = 0;
+
+    update().catch((err) => {
+        console.error(err);
+        tries++;
+    });
+
 
     // Periodically fetches the current scrobble and sets the activity
     updateInterval = setInterval(
@@ -223,9 +222,10 @@ async function initialize() {
                 if (++tries > 3) {
                     console.error("Failed to fetch/set activity 3 times, aborting...");
                     clearInterval(updateInterval);
+                    stopped = true;
                 }
             }),
-        settings.timeInterval
+        currentSettings.timeInterval
     );
 }
 
@@ -277,10 +277,8 @@ export default {
         console.log("Stopping last.fm...");
 
         stopped = true;
-        lastActivity = null;
-        updateInterval && clearInterval(updateInterval);
 
-        clearActivity();
+        flush();
         activityTypeUnpatch?.();
         activityTypeUnpatch = null;
     },
