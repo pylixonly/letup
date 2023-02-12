@@ -1,6 +1,7 @@
-import { logger, patcher } from "@vendetta";
+import { logger, patcher, plugin } from "@vendetta";
 import { findByProps, findByStoreName } from '@vendetta/metro';
 import { FluxDispatcher } from '@vendetta/metro/common';
+import Settings from "./settings";
 
 let stopped: Boolean,
     lastActivity: Activity,
@@ -8,13 +9,14 @@ let stopped: Boolean,
     lastTrackUrl: string,
     activityTypeUnpatch: () => void;
 
-// These are hardcoded for now until settings panel is implemented
-const appName = "Music";
-const username = "slyde99";
-const showTimestamp = true;
-const timeInterval = 5000;
-const listeningTo = true;
-const verboseLogging = true;
+const settings = plugin.storage as {
+    appName: string;
+    username: string;
+    showTimestamp: string;
+    timeInterval: number;
+    listeningTo: boolean;
+    verboseLogging: boolean;
+};
 
 // Constants for the API calls (perhaps these should be options?)
 const APPLICATION_ID = "1054951789318909972";
@@ -75,39 +77,30 @@ type Track = {
 const UserStore = findByStoreName("UserStore")
 const SET_ACTIVITY = findByProps('SET_ACTIVITY').SET_ACTIVITY;
 
-const verboseLog = (...message: any) => verboseLogging && logger.log(...message);
+const verboseLog = (...message: any) => settings.verboseLogging && logger.log(...message);
 
 async function fetchCurrentScrobble(): Promise<Track> {
     const params = new URLSearchParams({
         'method': 'user.getrecenttracks',
-        'user': username,
+        'user': settings.username,
         'api_key': LFM_API_KEY,
         'format': 'json',
         'limit': '1',
         'extended': '1'
     }).toString();
 
-    try {
-        const {
-            recenttracks: {
-                track: [lastTrack]
-            }
-        } = await fetch(`https://ws.audioscrobbler.com/2.0/?${params}`).then(x => x.json());
-
-        return {
-            name: lastTrack.name,
-            artist: lastTrack.artist.name,
-            album: lastTrack.album['#text'],
-            albumArt: filterAlbumCover(lastTrack.image[3]['#text']),
-            url: lastTrack.url,
-            date: lastTrack.date?.['#text'] ?? 'now',
-            nowPlaying: Boolean(lastTrack['@attr']?.nowplaying),
-            loved: lastTrack.loved === '1',
-        } as Track;
-    } catch (error) {
-        logger.error("Last.fm: An error occured while fetching user's track:\n", error);
-        throw error;
-    }
+    const info = await fetch(`https://ws.audioscrobbler.com/2.0/?${params}`).then(x => x.json());
+    const lastTrack = info.recenttracks?.track?.[0] || Promise.reject(info);
+    return {
+        name: lastTrack.name,
+        artist: lastTrack.artist.name,
+        album: lastTrack.album['#text'],
+        albumArt: filterAlbumCover(lastTrack.image[3]['#text']),
+        url: lastTrack.url,
+        date: lastTrack.date?.['#text'] ?? 'now',
+        nowPlaying: Boolean(lastTrack['@attr']?.nowplaying),
+        loved: lastTrack.loved === '1',
+    } as Track;
 }
 
 // Currently ditches the default album covers (they're ugly)
@@ -121,6 +114,7 @@ function filterAlbumCover(cover: string): string {
 
 // Clears the activity
 function clearActivity(): Promise<ResultActivity> {
+    lastActivity && verboseLog("--> Clearing activity...");
     return sendRequest(null);
 }
 
@@ -155,7 +149,10 @@ async function sendRequest(activity: Activity): Promise<ResultActivity> {
 // This is the main function that is called every 5 seconds (or whatever the user has set)
 async function update() {
     verboseLog("--> Fetching last track...");
-    const lastTrack = await fetchCurrentScrobble();
+    const lastTrack = await fetchCurrentScrobble().catch((err) => {
+        verboseLog("--> An error occurred while fetching the last track, aborting...");
+        throw err;
+    });
 
     if (!lastTrack.nowPlaying) {
         verboseLog("--> Last track is not currently playing, aborting...");
@@ -170,15 +167,15 @@ async function update() {
     }
 
     const activity = {
-        name: appName || "Music",
-        type: listeningTo ? 2 : 0,
+        name: settings.appName || "Music",
+        type: settings.listeningTo ? 2 : 0,
         details: lastTrack.name,
         state: `by ${lastTrack.artist}`,
     } as Activity;
 
     lastTrackUrl = lastTrack.url;
 
-    if (showTimestamp) {
+    if (settings.showTimestamp) {
         activity.timestamps = {
             start: Date.now() / 1000 | 0
         };
@@ -191,7 +188,10 @@ async function update() {
         }
     }
 
-    const response = await sendRequest(activity);
+    const response = await sendRequest(activity).catch((err) => {
+        verboseLog("--> An error occurred while setting the activity");
+        throw err;
+    });
 
     verboseLog("--> Successfully set activity!");
     verboseLog(response);
@@ -225,7 +225,7 @@ async function initialize() {
                     clearInterval(updateInterval);
                 }
             }),
-        timeInterval
+        settings.timeInterval
     );
 }
 
@@ -242,9 +242,9 @@ function patchActivityType() {
     const { actionHandler } = nodes.find((x: any) => x.name === "LocalActivityStore") as any;
 
     activityTypeUnpatch = patcher.before("LOCAL_ACTIVITY_UPDATE", actionHandler, ([{ activity }]) => {
-        if (activity.name !== lastActivity.name) return;
-
-        activity.type = lastActivity.type;
+        if (activity.name === lastActivity.name) {
+            activity.type = lastActivity.type;
+        }
     });
 }
 
@@ -253,6 +253,14 @@ export default {
     onLoad: () => {
         console.log("Starting last.fm plugin..");
         patchActivityType();
+
+        // Options
+        // settings.appName = "Music";
+        // settings.username = "slyde99";
+        // settings.showTimestamp = true;
+        // settings.timeInterval = 5000;
+        // settings.listeningTo = true;
+        // settings.verboseLogging = false;
 
         // If the user is already logged in (brrr connection), initialize the plugin
         if (UserStore.getCurrentUser()) {
@@ -275,5 +283,6 @@ export default {
         clearActivity();
         activityTypeUnpatch?.();
         activityTypeUnpatch = null;
-    }
+    },
+    settings: Settings
 }
