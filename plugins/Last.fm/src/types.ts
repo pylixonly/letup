@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 type PluginSettings = {
     /** Application's name */
     appName: string;

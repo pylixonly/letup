@@ -1,7 +1,7 @@
 import { logger } from "@vendetta";
 import { findByDisplayName } from "@vendetta/metro";
 
-let origState: Boolean;
+let origState: boolean;
 const ChatInput = findByDisplayName("ChatInput");
 
 export default {
@@ -14,4 +14,4 @@ export default {
         logger.log("Unloading HideGiftButton..");
         ChatInput.defaultProps.hideGiftButton = origState;
     }
-}
+};

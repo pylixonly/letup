@@ -13,7 +13,13 @@ for (const plug of await readdir("./plugins")) {
     try {
         const bundle = await rollup({
             input: `./plugins/${plug}/${manifest.main}`,
-            onwarn: () => { },
+            onwarn: (warning) => {
+                ![
+                    "UNRESOLVED_IMPORT",
+                    "MISSING_NAME_OPTION_FOR_IIFE_EXPORT",
+                    "CIRCULAR_DEPENDENCY"
+                ].includes(warning.code) && console.warn(warning);
+            },
             plugins: [
                 nodeResolve(),
                 commonjs(),

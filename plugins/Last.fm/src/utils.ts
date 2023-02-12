@@ -8,12 +8,12 @@ import Constants from "./constants";
 /** Fetches the latest user's scrobble */
 async function fetchLatestScrobble(): Promise<Track> {
     const params = new URLSearchParams({
-        'method': 'user.getrecenttracks',
-        'user': currentSettings.username,
-        'api_key': Constants.LFM_API_KEY,
-        'format': 'json',
-        'limit': '1',
-        'extended': '1'
+        "method": "user.getrecenttracks",
+        "user": currentSettings.username,
+        "api_key": Constants.LFM_API_KEY,
+        "format": "json",
+        "limit": "1",
+        "extended": "1"
     }).toString();
 
     const info = await fetch(`https://ws.audioscrobbler.com/2.0/?${params}`).then(x => {
@@ -24,12 +24,12 @@ async function fetchLatestScrobble(): Promise<Track> {
     return {
         name: lastTrack.name,
         artist: lastTrack.artist.name,
-        album: lastTrack.album['#text'],
-        albumArt: handleAlbumCover(lastTrack.image[3]['#text']),
+        album: lastTrack.album["#text"],
+        albumArt: handleAlbumCover(lastTrack.image[3]["#text"]),
         url: lastTrack.url,
-        date: lastTrack.date?.['#text'] ?? 'now',
-        nowPlaying: Boolean(lastTrack['@attr']?.nowplaying),
-        loved: lastTrack.loved === '1',
+        date: lastTrack.date?.["#text"] ?? "now",
+        nowPlaying: Boolean(lastTrack["@attr"]?.nowplaying),
+        loved: lastTrack.loved === "1",
     } as Track;
 }
 
@@ -129,7 +129,7 @@ export async function update() {
         activity.assets = {
             large_image: lastTrack.albumArt,
             large_text: `on ${lastTrack.album}`
-        }
+        };
     }
 
     const response = await sendRequest(activity).catch(async function (err) {

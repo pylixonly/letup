@@ -17,4 +17,4 @@ export default {
         logger.log("Disabling NoIdle..");
         unpatch?.();
     }
-}
+};

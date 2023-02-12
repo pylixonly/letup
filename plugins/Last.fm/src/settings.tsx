@@ -3,13 +3,14 @@ import { storage } from "@vendetta/plugin";
 import { useProxy } from "@vendetta/storage";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { Forms } from "@vendetta/ui/components";
+import { showToast } from "@vendetta/ui/toasts";
 
 import { currentSettings } from ".";
 import Constants from "./constants";
 import { flush, initialize } from "./utils";
 
 const { ScrollView, TouchableOpacity, Text } = ReactNative;
-const { FormInput, FormDivider, FormSwitchRow, FormText, FormIcon, FormTextColors } = Forms;
+const { FormInput, FormDivider, FormSwitchRow, FormText, FormIcon } = Forms;
 
 export default function Settings() {
     const settings = useProxy(storage) as PluginSettings;
@@ -17,8 +18,8 @@ export default function Settings() {
 
     React.useEffect(() => {
         navigation.setOptions({
-            headerRight: () => (
-                <TouchableOpacity onPress={() => {
+            headerRight: () => {
+                async function onPressCallback() {
                     for (const key in storage) {
                         if (typeof storage[key] === "boolean" || storage[key]) {
                             currentSettings[key] = settings[key];
@@ -26,11 +27,15 @@ export default function Settings() {
                     }
 
                     console.log("Applying settings...");
-                    flush().then(() => initialize());
-                }}>
-                    <FormText style={{ marginRight: 12 }}>UPDATE</FormText>
-                </TouchableOpacity>
-            )
+                    await flush();
+                    await initialize();
+                    showToast("Settings updated!", getAssetIDByName("Check"));
+                }
+
+                return <TouchableOpacity onPress={onPressCallback}>
+                    <FormText style={{ marginRight: 12 }}>{"UPDATE"}</FormText>
+                </TouchableOpacity>;
+            }
         });
     }, []);
 
@@ -77,5 +82,5 @@ export default function Settings() {
                 onValueChange={(value: boolean) => settings.verboseLogging = value}
             />
         </ScrollView>
-    )
+    );
 }

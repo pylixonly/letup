@@ -46,7 +46,7 @@ export default {
                         logger.error("Failed to start call", e);
                     }
                 },
-            })
+            });
         });
     }
-}
+};
