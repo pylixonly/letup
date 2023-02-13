@@ -185,7 +185,7 @@ export async function initialize() {
                     global.stopped = true;
                 }
             }),
-        currentSettings.timeInterval
+        (currentSettings.timeInterval || Constants.DEFAULT_TIME_INTERVAL) * 1000
     );
 }
 

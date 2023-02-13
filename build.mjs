@@ -55,7 +55,7 @@ for (const plug of plugin ? [plugin] : readdirSync("./plugins")) {
             ]
         };
 
-        const watchPlugin = new Promise((resolve, reject) => {
+        const watchPlugin = new Promise((resolve) => {
             const watcher = watch(config);
             watcher.on("event", (event) => {
                 switch (event.code) {
@@ -63,22 +63,21 @@ for (const plug of plugin ? [plugin] : readdirSync("./plugins")) {
                         process.stdout.write(`Building ${plug}... `);
                         break;
                     case "BUNDLE_END": {
-                        console.log("\x1b[32m", `Succeed! (${event.duration}ms)`, "\x1b[0m");
                         const toHash = readFileSync(outPath);
                         manifest.hash = createHash("sha256").update(toHash).digest("hex");
                         manifest.main = "index.js";
                         writeFileSync(`./dist/${plug}/manifest.json`, JSON.stringify(manifest));
 
+                        process.stdout.write("\x1b[32m" + `Succeed! (${event.duration}ms)` + "\x1b[0m");
+
+                        console.log();
                         resolve();
                         break;
                     }
                     case "ERROR":
                         console.error("\x1b[31m", "Failed! :(", "\x1b[0m");
-                        console.error(event.error);
-                        reject(event.error);
-                        break;
+                        throw event.error;
                     case "FATAL":
-                        reject(event.error);
                         process.exit(1);
                 }
             });

@@ -1,5 +1,6 @@
 const Constants = {
     DEFAULT_APP_NAME: "Music",
+    DEFAULT_TIME_INTERVAL: 5,
     /** The application ID of the plugin */
     APPLICATION_ID: "1054951789318909972",
     /** Last.fm api key */
