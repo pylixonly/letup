@@ -12,6 +12,25 @@ import { flush, initialize } from "./utils";
 const { ScrollView, TouchableOpacity, Text } = ReactNative;
 const { FormInput, FormDivider, FormSwitchRow, FormText, FormIcon } = Forms;
 
+function UpdateButton() {
+    async function onPressCallback() {
+        for (const key in storage) {
+            if (typeof storage[key] === "boolean" || storage[key]) {
+                currentSettings[key] = storage[key];
+            }
+        }
+
+        console.log("Applying settings...");
+        await flush();
+        await initialize();
+        showToast("Settings updated!", getAssetIDByName("Check"));
+    }
+
+    return <TouchableOpacity onPress={onPressCallback}>
+        <FormText style={{ marginRight: 12 }}>{"UPDATE"}</FormText>
+    </TouchableOpacity>;
+
+}
 export default function Settings() {
     const settings = useProxy(storage) as PluginSettings;
     const navigation = NavigationNative.useNavigation();
@@ -19,24 +38,7 @@ export default function Settings() {
     React.useEffect(() => {
         navigation.setOptions({
             title: "Last.fm Configuration",
-            headerRight: () => {
-                async function onPressCallback() {
-                    for (const key in storage) {
-                        if (typeof storage[key] === "boolean" || storage[key]) {
-                            currentSettings[key] = settings[key];
-                        }
-                    }
-
-                    console.log("Applying settings...");
-                    await flush();
-                    await initialize();
-                    showToast("Settings updated!", getAssetIDByName("Check"));
-                }
-
-                return <TouchableOpacity onPress={onPressCallback}>
-                    <FormText style={{ marginRight: 12 }}>{"UPDATE"}</FormText>
-                </TouchableOpacity>;
-            }
+            headerRight: UpdateButton
         });
     }, []);
 
@@ -78,7 +80,7 @@ export default function Settings() {
             <FormSwitchRow
                 label="Verbose logging"
                 subLabel="Log more information to the console for debugging purposes"
-                leading={<FormIcon source={getAssetIDByName("icon-qs-files")} />}
+                leading={<FormIcon source={getAssetIDByName("pencil")} />}
                 value={settings.verboseLogging}
                 onValueChange={(value: boolean) => settings.verboseLogging = value}
             />
