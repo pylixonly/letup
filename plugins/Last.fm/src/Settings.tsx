@@ -15,7 +15,7 @@ const { FormInput, FormDivider, FormSwitchRow, FormText, FormIcon } = Forms;
 function UpdateButton() {
     async function onPressCallback() {
         for (const key in storage) {
-            if (storage[key] !== false && !storage[key]) {
+            if (storage[key] === false || storage[key]) {
                 currentSettings[key] = storage[key];
             }
         }
