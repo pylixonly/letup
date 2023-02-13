@@ -25,7 +25,7 @@ async function fetchLatestScrobble(): Promise<Track> {
         name: lastTrack.name,
         artist: lastTrack.artist.name,
         album: lastTrack.album["#text"],
-        albumArt: handleAlbumCover(lastTrack.image[3]["#text"]),
+        albumArt: await handleAlbumCover(lastTrack.image[3]["#text"]),
         url: lastTrack.url,
         date: lastTrack.date?.["#text"] ?? "now",
         nowPlaying: Boolean(lastTrack["@attr"]?.nowplaying),
@@ -37,7 +37,7 @@ async function fetchLatestScrobble(): Promise<Track> {
  * Currently ditches the default album covers 
  * @param cover The album cover given by Last.fm
 */
-function handleAlbumCover(cover: string): string {
+async function handleAlbumCover(cover: string): Promise<string> {
     // If the cover is a default one, return null (remove the cover)
     if (Constants.LFM_DEFAULT_COVER_HASHES.some(x => cover.includes(x))) {
         return null;

@@ -24,7 +24,11 @@ let failed = 0;
 
 await Promise.allSettled(toBuild.map(x => buildPlugin(x).catch(() => failed++)));
 
-console.log("\nDone! " + (failed ? "\x1b[31m" + `Failed to build ${failed} plugin${failed === 1 ? "" : "s"}` + "\x1b[0m" : "\x1b[32m" + "All plugins built successfully!" + "\x1b[0m"));
+console.log("\nDone! " + (
+    failed
+        ? "\x1b[31m" + `Failed to build ${failed} plugin${failed === 1 ? "" : "s"}` + "\x1b[0m"
+        : "\x1b[32m" + "All plugins built successfully!" + "\x1b[0m"
+));
 
 if (!isWatch) process.exit(0);
 else console.log("\nWatching for changes...");

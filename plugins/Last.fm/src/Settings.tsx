@@ -15,7 +15,7 @@ const { FormInput, FormDivider, FormSwitchRow, FormText, FormIcon } = Forms;
 function UpdateButton() {
     async function onPressCallback() {
         for (const key in storage) {
-            if (typeof storage[key] === "boolean" || storage[key]) {
+            if (storage[key] !== false && !storage[key]) {
                 currentSettings[key] = storage[key];
             }
         }
@@ -27,7 +27,7 @@ function UpdateButton() {
     }
 
     return <TouchableOpacity onPress={onPressCallback}>
-        <FormText style={{ marginRight: 12 }}>{"UPDATE"}</FormText>
+        <FormText style={{ marginRight: 12 }}>UPDATE</FormText>
     </TouchableOpacity>;
 
 }
@@ -58,6 +58,15 @@ export default function Settings() {
                 title="Last.fm username"
                 helpText={!settings.username && <Text style={{ color: "#FF0000" }}>{"This field is required!"}</Text>}
                 placeholder="wumpus123"
+                returnKeyType="done"
+            />
+            <FormDivider />
+            <FormInput
+                value={settings.timeInterval}
+                onChangeText={(value: string) => settings.timeInterval = Number(value)}
+                title="Update interval (in seconds)"
+                placeholder={Constants.DEFAULT_TIME_INTERVAL.toString()}
+                keyboardType="numeric"
                 returnKeyType="done"
             />
             <FormDivider />

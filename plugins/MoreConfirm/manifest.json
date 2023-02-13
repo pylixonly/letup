@@ -1,6 +1,6 @@
 {
     "name": "MoreConfirm",
-    "description": "Prompt comfirmations before making an irreversible actions.",
+    "description": "Prompts confirmations before making irreversible actions.",
     "authors": [
         {
             "name": "amsyarasyiq",
