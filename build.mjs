@@ -4,41 +4,45 @@ import nodeResolve from "@rollup/plugin-node-resolve";
 import { createHash } from "crypto";
 import { readdirSync, readFileSync, writeFileSync } from "fs";
 import { argv } from "process";
-import { watch } from "rollup";
+import { rollup, watch } from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 
 const args = argv.slice(2);
+console.clear();
 
 const inputPlugins = args.filter(x => !x.startsWith("-"));
 const flags = args.map(x => x.toLowerCase()).filter(x => x.startsWith("-"));
 
 const isWatch = flags.includes("--watch") || flags.includes("-w");
-
-console.clear();
-
 const toBuild = inputPlugins.length ? inputPlugins : readdirSync("./plugins");
 
-console.log(`Building ${toBuild.length} plugin${toBuild.length === 1 ? "" : "s"}...`);
+console.log(`Building ${toBuild.length} plugin(s)...`);
 
 let failed = 0;
 
-await Promise.allSettled(toBuild.map(x => buildPlugin(x).catch(() => failed++)));
+for (const plugin of toBuild) {
+    try {
+        await buildPlugin(plugin);
+    } catch (e) {
+        failed++;
+    }
+}
 
-console.log("\nDone! " + (
+console.log("\n" + (
     failed
-        ? "\x1b[31m" + `Failed to build ${failed} plugin${failed === 1 ? "" : "s"}` + "\x1b[0m"
-        : "\x1b[32m" + "All plugins built successfully!" + "\x1b[0m"
+        ? "\x1b[31m" + `Failed to build ${failed} plugin(s)"}` + "\x1b[0m"
+        : "\x1b[32m" + "All plugin(s) built successfully!" + "\x1b[0m"
 ));
 
-if (!isWatch) process.exit(0);
-else console.log("\nWatching for changes...");
+
+isWatch && console.log("\nWatching for changes...");
 
 async function buildPlugin(plugin) {
     const manifest = JSON.parse(readFileSync(`./plugins/${plugin}/manifest.json`).toString());
     const entry = "index.js";
     const outPath = `./dist/${plugin}/${entry}`;
 
-    const watcher = watch({
+    const options = {
         input: `./plugins/${plugin}/${manifest.main}`,
         output: {
             file: outPath,
@@ -69,7 +73,18 @@ async function buildPlugin(plugin) {
                 minify: true,
             })
         ]
-    });
+    };
+
+    if (!isWatch) {
+        return await rollup(options).then(async (bundle) => {
+            await bundle.write(options.output);
+            await bundle.close();
+
+            console.log(`${plugin}: ` + "\x1b[32m" + "Build succeed!" + "\x1b[0m");
+        });
+    }
+
+    const watcher = watch(options);
 
     return await new Promise((resolve, reject) => {
         watcher.on("event", (event) => {
@@ -77,12 +92,14 @@ async function buildPlugin(plugin) {
                 case "START":
                     break;
                 case "BUNDLE_END": {
+                    event.result.close();
+
                     const toHash = readFileSync(outPath);
                     manifest.hash = createHash("sha256").update(toHash).digest("hex");
                     manifest.main = "index.js";
                     writeFileSync(`./dist/${plugin}/manifest.json`, JSON.stringify(manifest));
 
-                    console.log(`${plugin}: ` + "\x1b[32m" + `Build succeed! (${event.output})` + "\x1b[0m");
+                    console.log(`${plugin}: ` + "\x1b[32m" + `Build succeed! (${event.duration}ms)` + "\x1b[0m");
                     resolve();
                     break;
                 }
