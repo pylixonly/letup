@@ -86,6 +86,11 @@ async function buildPlugin(plugin) {
         await bundle.write(options.output);
         await bundle.close();
 
+        const toHash = readFileSync(outPath);
+        manifest.hash = createHash("sha256").update(toHash).digest("hex");
+        manifest.main = "index.js";
+        writeFileSync(`./dist/${plugin}/manifest.json`, JSON.stringify(manifest));
+
         console.log(`${plugin}: ` + "\x1b[32m" + "Build succeed!" + "\x1b[0m");
         return;
     }
