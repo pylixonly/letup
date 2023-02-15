@@ -1,9 +1,11 @@
-import { patcher } from "@vendetta";
+import { findByProps } from "@vendetta/metro";
 import { FluxDispatcher } from "@vendetta/metro/common";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
-import { currentSettings, global, SET_ACTIVITY, verboseLog } from ".";
+import { currentSettings, global, verboseLog } from ".";
 import Constants from "./constants";
+
+const AssetManager = findByProps("getAssetIds");
 
 /** Fetches the latest user's scrobble */
 async function fetchLatestScrobble(): Promise<Track> {
@@ -49,8 +51,14 @@ async function handleAlbumCover(cover: string): Promise<string> {
     return cover;
 }
 
+/** Clears the user's activity */
+function clearActivity() {
+    global.lastActivity && verboseLog("--> Clearing activity...");
+    return sendRequest(null);
+}
+
 /** Sends the activity details to Discord  */
-async function sendRequest(activity: Activity): Promise<ResultActivity> {
+function sendRequest(activity: Activity) {
     if (global.pluginStopped) {
         console.log("--> Plugin is unloaded, aborting...");
         global.updateInterval && clearInterval(global.updateInterval);
@@ -59,54 +67,48 @@ async function sendRequest(activity: Activity): Promise<ResultActivity> {
 
     global.lastActivity = activity;
 
-    return await SET_ACTIVITY.handler({
-        isSocketConnected: () => true,
-        socket: {
-            id: 120,
-            application: {
-                id: Constants.APPLICATION_ID,
-                name: activity?.name || "RichPresence"
-            },
-            transport: "ipc"
-        },
-        args: {
-            pid: 120,
-            activity: activity && { ...activity } || null
-        }
+    FluxDispatcher.dispatch({
+        type: "LOCAL_ACTIVITY_UPDATE",
+        activity: activity
     });
 }
 
-/** Clears the user's activity */
-function clearActivity(): Promise<ResultActivity> {
-    global.lastActivity && verboseLog("--> Clearing activity...");
-    return sendRequest(null);
+/** Fetches a Discord application's asset */
+async function fetchAsset<T extends string | string[]>(asset: T, appId: string = Constants.APPLICATION_ID): Promise<T> {
+    if (typeof asset === "string") {
+        const assetId = await AssetManager.getAssetIds(appId, [asset]);
+        return assetId[0] as T;
+    }
+
+    return await AssetManager.getAssetIds(appId, asset);
 }
 
 /**
  * Fetches the current scrobble and sets the activity. 
  * This function is actively called by the updateInterval.
  */
-export async function update() {
+async function update() {
     verboseLog("--> Fetching last track...");
 
     if (!currentSettings.username) {
         showToast("Last.fm username is not set!", getAssetIDByName("Small"));
-        await flush(); // Flush as we always need reinitialization
+        flush(); // Flush as we always need reinitialization
         throw new Error("Username is not set");
     }
 
     const lastTrack = await fetchLatestScrobble().catch(async (err) => {
         verboseLog("--> An error occurred while fetching the last track, aborting...");
-        await clearActivity().catch();
+        clearActivity();
         throw err;
     });
 
     if (!lastTrack.nowPlaying) {
         verboseLog("--> Last track is not currently playing, aborting...");
-        return await clearActivity();
+        clearActivity();
+        return;
     }
 
-    verboseLog("--> Track fetched! Setting activity...");
+    verboseLog("--> Track fetched!");
 
     if (global.lastTrackUrl === lastTrack.url) {
         verboseLog("--> Last track is the same as the previous one, aborting...");
@@ -115,9 +117,11 @@ export async function update() {
 
     const activity = {
         name: currentSettings.appName || Constants.DEFAULT_APP_NAME,
+        flags: 0,
         type: currentSettings.listeningTo ? 2 : 0,
         details: lastTrack.name,
         state: `by ${lastTrack.artist}`,
+        application_id: Constants.APPLICATION_ID,
     } as Activity;
 
     global.lastTrackUrl = lastTrack.url;
@@ -131,31 +135,33 @@ export async function update() {
 
     if (lastTrack.album) {
         activity.assets = {
-            large_image: lastTrack.albumArt,
+            large_image: await fetchAsset(lastTrack.albumArt),
             large_text: `on ${lastTrack.album}`
         };
     }
 
-    const response = await sendRequest(activity).catch(async (err) => {
+    verboseLog("--> Setting activity...");
+    verboseLog(activity);
+
+    try {
+        sendRequest(activity);
+    } catch (err) {
         verboseLog("--> An error occurred while setting the activity");
-        await clearActivity().catch();
+        clearActivity();
         throw err;
-    });
+    }
 
     verboseLog("--> Successfully set activity!");
-    verboseLog(response);
-    return response;
 }
 
-/** Stops everything */
-export function flush(): Promise<ResultActivity> {
+/** Stops and reset everything, can be started again with `initialize()` */
+export function flush() {
     console.log("--> Flushing...");
     global.lastActivity = null;
     global.lastTrackUrl = null;
 
     global.updateInterval && clearInterval(global.updateInterval);
-
-    return clearActivity();
+    clearActivity();
 }
 
 /** Initializes the plugin */
@@ -166,11 +172,11 @@ export async function initialize() {
         throw new Error("Plugin is already stopped!");
     }
 
-    await flush();
+    flush();
 
     let tries = 0;
 
-    update().catch((err) => {
+    await update().catch((err) => {
         console.error(err);
         tries++;
     });
@@ -178,34 +184,17 @@ export async function initialize() {
     // Periodically fetches the current scrobble and sets the activity
     global.updateInterval = setInterval(
         () => update()
-            .then(() => tries = 0)
+            .then(() => {
+                tries = 0;
+            })
             .catch(err => {
                 console.error(err);
 
                 if (++tries > 3) {
                     console.error("Failed to fetch/set activity 3 times, aborting...");
-                    clearInterval(global.updateInterval);
+                    flush();
                 }
             }),
         (currentSettings.timeInterval || Constants.DEFAULT_TIME_INTERVAL) * 1000
     );
-}
-
-// Discord doesn't allow us to set the activity type to "Listening to" so we have to patch it
-export function patchActivityType(): () => boolean {
-    if (global.activityTypeUnpatch) {
-        console.warn("This is weird... activity type override is already defined?");
-        global.activityTypeUnpatch();
-    }
-
-    console.log("Patching activity type...");
-
-    const nodes = Object.values(FluxDispatcher._actionHandlers._dependencyGraph.nodes);
-    const { actionHandler } = nodes.find((x: any) => x.name === "LocalActivityStore") as any;
-
-    return patcher.before("LOCAL_ACTIVITY_UPDATE", actionHandler, ([{ activity }]) => {
-        if (activity && activity.name === global.lastActivity.name) {
-            activity.type = global.lastActivity.type;
-        }
-    });
 }

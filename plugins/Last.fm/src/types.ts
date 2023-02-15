@@ -14,31 +14,19 @@ type PluginSettings = {
     verboseLogging: boolean;
 };
 
-// Discord activity, used for SET_ACTIVITY
+// A type of an object that is returned by the Discord API after setting the activity
 type Activity = {
     name: string;
-    type: number;
-    details: string;
-    state: string;
-    timestamps?: {
-        start: number;
-        end?: number;
-    };
-    assets?: ActivityAssets;
-}
-
-// A type of an object that is returned by the Discord API after setting the activity
-type ResultActivity = {
-    name: string;
-    type: number;
-    details: string;
-    state: string;
-    timestamps?: {
-        start: number;
-        end?: number;
-    };
-    assets?: ActivityAssets;
     application_id: string;
+    flags: number;
+    type: number;
+    details?: string;
+    state?: string;
+    timestamps?: {
+        start: number;
+        end?: number;
+    };
+    assets?: ActivityAssets;
 };
 
 // The assets of the activity

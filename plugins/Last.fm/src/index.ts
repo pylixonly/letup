@@ -3,14 +3,13 @@ import { findByProps, findByStoreName } from "@vendetta/metro";
 import { FluxDispatcher } from "@vendetta/metro/common";
 
 import Settings from "./Settings";
-import { flush, initialize, patchActivityType } from "./utils";
+import { flush, initialize } from "./utils";
 
 export const global = {} as {
     pluginStopped?: boolean,
     lastActivity?: Activity,
     updateInterval?: NodeJS.Timer,
     lastTrackUrl?: string,
-    activityTypeUnpatch?: () => boolean
 };
 
 export const currentSettings = { ...plugin.storage } as PluginSettings;
@@ -25,7 +24,6 @@ export const verboseLog = (...message: any) => currentSettings.verboseLogging &&
 export default {
     onLoad: () => {
         console.log("Starting last.fm plugin..");
-        global.activityTypeUnpatch = patchActivityType();
         global.pluginStopped = false;
 
         if (UserStore.getCurrentUser()) {
@@ -39,12 +37,9 @@ export default {
     },
     onUnload: () => {
         console.log("Stopping last.fm...");
-
         global.pluginStopped = true;
 
         flush();
-        global.activityTypeUnpatch?.();
-        global.activityTypeUnpatch = null;
     },
     settings: Settings
 };
