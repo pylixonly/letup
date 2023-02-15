@@ -6,7 +6,7 @@ import Settings from "./Settings";
 import { flush, initialize, patchActivityType } from "./utils";
 
 export const global = {} as {
-    stopped?: boolean,
+    pluginStopped?: boolean,
     lastActivity?: Activity,
     updateInterval?: NodeJS.Timer,
     lastTrackUrl?: string,
@@ -26,7 +26,7 @@ export default {
     onLoad: () => {
         console.log("Starting last.fm plugin..");
         global.activityTypeUnpatch = patchActivityType();
-        global.stopped = false;
+        global.pluginStopped = false;
 
         if (UserStore.getCurrentUser()) {
             console.log("User is already logged in, initializing...");
@@ -40,7 +40,7 @@ export default {
     onUnload: () => {
         console.log("Stopping last.fm...");
 
-        global.stopped = true;
+        global.pluginStopped = true;
 
         flush();
         global.activityTypeUnpatch?.();

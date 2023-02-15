@@ -24,16 +24,16 @@ for (const plugin of toBuild) {
     try {
         await buildPlugin(plugin);
     } catch (e) {
+        console.error(e.stack || e);
         failed++;
     }
 }
 
 console.log("\n" + (
     failed
-        ? "\x1b[31m" + `Failed to build ${failed} plugin(s)"}` + "\x1b[0m"
+        ? "\x1b[31m" + `Failed to build ${failed} plugin(s)` + "\x1b[0m"
         : "\x1b[32m" + "All plugin(s) built successfully!" + "\x1b[0m"
 ));
-
 
 isWatch && console.log("\nWatching for changes...");
 
@@ -42,6 +42,7 @@ async function buildPlugin(plugin) {
     const entry = "index.js";
     const outPath = `./dist/${plugin}/${entry}`;
 
+    /** @type {import("rollup").RollupOptions} */
     const options = {
         input: `./plugins/${plugin}/${manifest.main}`,
         output: {
@@ -49,7 +50,7 @@ async function buildPlugin(plugin) {
             globals(id) {
                 if (id.startsWith("@vendetta")) return id.substring(1).replace(/\//g, ".");
                 const map = {
-                    react: "window.React",
+                    react: "window.React"
                 };
 
                 return map[id] || null;
@@ -70,18 +71,23 @@ async function buildPlugin(plugin) {
             commonjs(),
             esbuild({
                 target: "esnext",
+                supported: {
+                    "arrow": false, // arrows are supported but not with async await
+                    "class": false,
+                    "bigint": false,
+                },
                 minify: true,
             })
         ]
     };
 
     if (!isWatch) {
-        return await rollup(options).then(async (bundle) => {
-            await bundle.write(options.output);
-            await bundle.close();
+        const bundle = await rollup(options);
+        await bundle.write(options.output);
+        await bundle.close();
 
-            console.log(`${plugin}: ` + "\x1b[32m" + "Build succeed!" + "\x1b[0m");
-        });
+        console.log(`${plugin}: ` + "\x1b[32m" + "Build succeed!" + "\x1b[0m");
+        return;
     }
 
     const watcher = watch(options);
@@ -89,8 +95,6 @@ async function buildPlugin(plugin) {
     return await new Promise((resolve, reject) => {
         watcher.on("event", (event) => {
             switch (event.code) {
-                case "START":
-                    break;
                 case "BUNDLE_END": {
                     event.result.close();
 
@@ -105,13 +109,11 @@ async function buildPlugin(plugin) {
                 }
                 case "ERROR":
                     console.error(`${plugin}: ` + "\x1b[31m", "Failed! :(", "\x1b[0m");
-                    console.error(event.error.stack);
-                    reject(event.error.stack);
+                    reject(event.error);
                     break;
                 case "FATAL":
                     console.error(`${plugin}: ` + "\x1b[31m", "Failed! :(", "\x1b[0m");
-                    console.error(event.error.stack);
-                    reject(event.error.stack);
+                    reject(event.error);
                     process.exit(1);
             }
         });

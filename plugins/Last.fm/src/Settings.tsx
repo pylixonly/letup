@@ -7,7 +7,7 @@ import { showToast } from "@vendetta/ui/toasts";
 
 import { currentSettings } from ".";
 import Constants from "./constants";
-import { flush, initialize } from "./utils";
+import { initialize } from "./utils";
 
 const { ScrollView, TouchableOpacity, Text } = ReactNative;
 const { FormInput, FormDivider, FormSwitchRow, FormText, FormIcon } = Forms;
@@ -21,7 +21,6 @@ function UpdateButton() {
         }
 
         console.log("Applying settings...");
-        await flush();
         await initialize();
         showToast("Settings updated!", getAssetIDByName("Check"));
     }
@@ -31,6 +30,7 @@ function UpdateButton() {
     </TouchableOpacity>;
 
 }
+
 export default function Settings() {
     const settings = useProxy(storage) as PluginSettings;
     const navigation = NavigationNative.useNavigation();

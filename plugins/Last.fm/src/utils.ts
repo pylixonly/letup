@@ -16,11 +16,15 @@ async function fetchLatestScrobble(): Promise<Track> {
         "extended": "1"
     }).toString();
 
-    const info = await fetch(`https://ws.audioscrobbler.com/2.0/?${params}`).then(x => {
-        if (!x.ok) throw new Error(`Failed to fetch latest scrobble: ${x.status} ${x.statusText}`);
-        return x.json();
-    });
-    const lastTrack = info.recenttracks?.track?.[0] || Promise.reject(info);
+    const result = await fetch(`https://ws.audioscrobbler.com/2.0/?${params}`);
+    if (!result.ok) throw new Error(`Failed to fetch the latest scrobble: ${result.statusText}`);
+
+    const info = await result.json();
+
+    const lastTrack = info?.recenttracks?.track?.[0];
+
+    if (!lastTrack) throw info;
+
     return {
         name: lastTrack.name,
         artist: lastTrack.artist.name,
@@ -47,7 +51,7 @@ async function handleAlbumCover(cover: string): Promise<string> {
 
 /** Sends the activity details to Discord  */
 async function sendRequest(activity: Activity): Promise<ResultActivity> {
-    if (global.stopped) {
+    if (global.pluginStopped) {
         console.log("--> Plugin is unloaded, aborting...");
         global.updateInterval && clearInterval(global.updateInterval);
         activity = null;
@@ -91,7 +95,7 @@ export async function update() {
         throw new Error("Username is not set");
     }
 
-    const lastTrack = await fetchLatestScrobble().catch(async function (err) {
+    const lastTrack = await fetchLatestScrobble().catch(async (err) => {
         verboseLog("--> An error occurred while fetching the last track, aborting...");
         await clearActivity().catch();
         throw err;
@@ -132,7 +136,7 @@ export async function update() {
         };
     }
 
-    const response = await sendRequest(activity).catch(async function (err) {
+    const response = await sendRequest(activity).catch(async (err) => {
         verboseLog("--> An error occurred while setting the activity");
         await clearActivity().catch();
         throw err;
@@ -147,6 +151,8 @@ export async function update() {
 export function flush(): Promise<ResultActivity> {
     console.log("--> Flushing...");
     global.lastActivity = null;
+    global.lastTrackUrl = null;
+
     global.updateInterval && clearInterval(global.updateInterval);
 
     return clearActivity();
@@ -156,14 +162,11 @@ export function flush(): Promise<ResultActivity> {
 export async function initialize() {
     console.log("--> Initializing...");
 
-    if (global.stopped) {
+    if (global.pluginStopped) {
         throw new Error("Plugin is already stopped!");
     }
 
-    global.lastTrackUrl = null;
-
-    global.updateInterval && clearInterval(global.updateInterval);
-    global.lastActivity && await clearActivity();
+    await flush();
 
     let tries = 0;
 
@@ -182,7 +185,6 @@ export async function initialize() {
                 if (++tries > 3) {
                     console.error("Failed to fetch/set activity 3 times, aborting...");
                     clearInterval(global.updateInterval);
-                    global.stopped = true;
                 }
             }),
         (currentSettings.timeInterval || Constants.DEFAULT_TIME_INTERVAL) * 1000
