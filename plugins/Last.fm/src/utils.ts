@@ -128,6 +128,12 @@ async function update() {
 
     global.lastTrackUrl = lastTrack.url;
 
+    if (activity.name.includes("{{")) {
+        for (const key in lastTrack) {
+            activity.name = activity.name.replace(`{{${key}}}`, lastTrack[key]);
+        }
+    }
+
     // Set timestamps
     if (currentSettings.showTimestamp) {
         activity.timestamps = {
