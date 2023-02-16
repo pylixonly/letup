@@ -75,6 +75,8 @@ function sendRequest(activity: Activity) {
 
 /** Fetches a Discord application's asset */
 async function fetchAsset<T extends string | string[]>(asset: T, appId: string = Constants.APPLICATION_ID): Promise<T> {
+    if (!asset) return null;
+
     if (typeof asset === "string") {
         const assetId = await AssetManager.getAssetIds(appId, [asset]);
         return assetId[0] as T;
