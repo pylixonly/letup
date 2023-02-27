@@ -3,8 +3,8 @@ import { FluxDispatcher } from "@vendetta/metro/common";
 
 let unpatch: () => void;
 
-export default {
-    onLoad: () => {
+export default class NoIdle {
+    onLoad() {
         logger.log("Starting NoIdle...");
 
         unpatch = patcher.before("dispatch", FluxDispatcher, ([{ type }]) => {
@@ -12,9 +12,10 @@ export default {
 
             return [{ type: "IDLE", idle: false }];
         });
-    },
-    onUnload: () => {
+    }
+    onUnload() {
         logger.log("Disabling NoIdle..");
         unpatch?.();
     }
-};
+}
+

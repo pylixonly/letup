@@ -21,8 +21,8 @@ export const SET_ACTIVITY = findByProps("SET_ACTIVITY").SET_ACTIVITY;
 export const verboseLog = (...message: any) => currentSettings.verboseLogging && console.log(...message);
 
 // Plugin entry point
-export default {
-    onLoad: () => {
+export default class LastFM {
+    onLoad() {
         console.log("Starting last.fm plugin..");
         global.pluginStopped = false;
 
@@ -34,12 +34,15 @@ export default {
         FluxDispatcher.subscribe("CONNECTION_OPEN", () => {
             initialize().catch(console.error);
         });
-    },
-    onUnload: () => {
+    }
+
+    onUnload() {
         console.log("Stopping last.fm...");
         global.pluginStopped = true;
 
         flush();
-    },
-    settings: Settings
-};
+    }
+
+    settings = Settings;
+}
+

@@ -23,8 +23,8 @@ import { findByProps } from "@vendetta/metro";
 const dialog = findByProps("show", "confirm", "close");
 const CallManager = findByProps("handleStartCall");
 
-export default {
-    onLoad: () => {
+export default class MoreConfirm {
+    onLoad() {
         // Patch voice/video calls
         logger.log("MoreConfirm: patching calls...");
 
@@ -49,4 +49,4 @@ export default {
             });
         });
     }
-};
+}

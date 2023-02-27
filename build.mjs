@@ -5,7 +5,7 @@ import { createHash } from "crypto";
 import { readdirSync, readFileSync, writeFileSync } from "fs";
 import { argv } from "process";
 import { rollup, watch } from "rollup";
-import esbuild from "rollup-plugin-esbuild";
+import { swc } from "rollup-plugin-swc3";
 
 const args = argv.slice(2);
 console.clear();
@@ -69,12 +69,14 @@ async function buildPlugin(plugin) {
         plugins: [
             nodeResolve(),
             commonjs(),
-            esbuild({
-                target: "esnext",
-                supported: {
-                    "arrow": false, // arrows are supported but not with async await
-                    "class": false,
-                    "bigint": false,
+            swc({
+                env: {
+                    targets: "defaults",
+                    include: [
+                        "transform-classes",
+                        "transform-arrow-functions",
+                    ],
+                    minify: {}
                 },
                 minify: true,
             })
