@@ -21,7 +21,7 @@ export const SET_ACTIVITY = findByProps("SET_ACTIVITY").SET_ACTIVITY;
 export const verboseLog = (...message: any) => currentSettings.verboseLogging && console.log(...message);
 
 // Plugin entry point
-export default class LastFM {
+export default new class LastFM {
     onLoad() {
         console.log("Starting last.fm plugin..");
         global.pluginStopped = false;
@@ -44,5 +44,4 @@ export default class LastFM {
     }
 
     settings = Settings;
-}
-
+};

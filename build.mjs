@@ -5,7 +5,8 @@ import { createHash } from "crypto";
 import { readdirSync, readFileSync, writeFileSync } from "fs";
 import { argv } from "process";
 import { rollup, watch } from "rollup";
-import { swc } from "rollup-plugin-swc3";
+
+const swc = (await import("@aliucord/rollup-plugin-swc")).default.default;
 
 const args = argv.slice(2);
 console.clear();
@@ -75,10 +76,9 @@ async function buildPlugin(plugin) {
                     include: [
                         "transform-classes",
                         "transform-arrow-functions",
-                    ],
-                    minify: {}
+                    ]
                 },
-                minify: true,
+                minify: true
             })
         ]
     };

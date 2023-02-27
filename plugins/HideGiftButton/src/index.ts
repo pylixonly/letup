@@ -4,7 +4,7 @@ import { findByDisplayName } from "@vendetta/metro";
 let origState: boolean;
 const ChatInput = findByDisplayName("ChatInput");
 
-export default class HideGiftButton {
+export default new class HideGiftButton {
     onLoad() {
         logger.log("Starting HideGiftButton...");
         origState = ChatInput.defaultProps.hideGiftButton;
@@ -14,5 +14,4 @@ export default class HideGiftButton {
         logger.log("Unloading HideGiftButton..");
         ChatInput.defaultProps.hideGiftButton = origState;
     }
-}
-
+};
