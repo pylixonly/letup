@@ -1,0 +1,1 @@
+(function(exports){'use strict';const onUnload=globalThis.vendetta.patcher.before("createPendingReply",globalThis.vendetta.metro.findByProps("createPendingReply"),function(param){let[arg]=param;return arg.shouldMention&&=false});exports.onUnload=onUnload;return exports;})({});
