@@ -6,7 +6,8 @@ import { readdirSync, readFileSync, writeFileSync } from "fs";
 import { argv } from "process";
 import { rollup, watch } from "rollup";
 
-const swc = (await import("@aliucord/rollup-plugin-swc")).default.default;
+import swc from "@swc/core";
+import esbuild from "rollup-plugin-esbuild";
 
 const args = argv.slice(2);
 console.clear();
@@ -49,7 +50,9 @@ async function buildPlugin(plugin) {
         output: {
             file: outPath,
             globals(id) {
-                if (id.startsWith("@vendetta")) return id.substring(1).replace(/\//g, ".");
+                if (id.startsWith("@vendetta"))
+                    return id.substring(1).replace(/\//g, ".");
+
                 const map = {
                     react: "window.React"
                 };
@@ -70,16 +73,29 @@ async function buildPlugin(plugin) {
         plugins: [
             nodeResolve(),
             commonjs(),
-            swc({
-                env: {
-                    targets: "defaults",
-                    include: [
-                        "transform-classes",
-                        "transform-arrow-functions",
-                    ]
+            {
+                name: "swc",
+                transform(code, id) {
+                    return swc.transform(code, {
+                        filename: id,
+                        jsc: {
+                            parser: {
+                                syntax: "typescript",
+                                tsx: true,
+                            },
+                            externalHelpers: true,
+                        },
+                        env: {
+                            targets: "defaults",
+                            include: [
+                                "transform-classes",
+                                "transform-arrow-functions",
+                            ],
+                        },
+                    });
                 },
-                minify: true
-            })
+            },
+            esbuild({ minify: true }),
         ]
     };
 
