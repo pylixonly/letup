@@ -1,15 +1,14 @@
 import { findByStoreName } from "@vendetta/metro";
 import { NavigationNative, React, ReactNative, stylesheet } from "@vendetta/metro/common";
-import { storage } from "@vendetta/plugin";
 import { useProxy } from "@vendetta/storage";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { Forms } from "@vendetta/ui/components";
-import { SettingsSchema } from ".";
+import { settings, SettingsSchema } from ".";
 
 const UserStore = findByStoreName("UserStore");
 
 const { ScrollView, TouchableOpacity, Image, FlatList } = ReactNative;
-const { FormInput, FormDivider, FormText, FormIcon, FormRow, FormSection } = Forms;
+const { FormInput, FormDivider, FormText, FormIcon, FormRow, FormSection, FormSwitchRow } = Forms;
 
 const styles = stylesheet.createThemedStyleSheet({
     avatar: {
@@ -32,15 +31,14 @@ function AddRow({ onFinish }: { onFinish: () => void }) {
     const [value, setValue] = React.useState("");
 
     const onPressCallback = () => {
-        if (value && +value && UserStore.getUser(value) && !storage.exempted.includes(value)) {
-            storage.exempted = [...storage.exempted, value];
+        if (!isNaN(parseInt(value)) && UserStore.getUser(value) && !settings.exempted.includes(value)) {
+            settings.exempted = [...settings.exempted, value];
             setValue("");
         }
         onFinish();
     };
 
-    return <>
-        <FormDivider />
+    return (
         <FormRow
             leading={<FormIcon source={getAssetIDByName("ic_add_friend")} />}
             label={<FormInput autoFocus
@@ -57,12 +55,13 @@ function AddRow({ onFinish }: { onFinish: () => void }) {
                 </TouchableOpacity>
             )}
         />
-    </>;
+    );
 }
 
 export default function Settings() {
+    useProxy(settings) as SettingsSchema;
+
     const [shouldShowAdd, setShouldShowAdd] = React.useState(false);
-    const settings = useProxy(storage) as SettingsSchema;
     const navigation = NavigationNative.useNavigation();
 
     React.useEffect(() => {
@@ -73,18 +72,26 @@ export default function Settings() {
 
     return (
         <ScrollView>
-            <FormSection title="Exempted Users" titleStyleType="no_border">
+            <FormSwitchRow
+                label="Enable blacklist mode"
+                subLabel="If enabled, only users in the exempted list will be affected by the plugin."
+                leading={<FormIcon source={getAssetIDByName("ic_block")} />}
+                value={settings.isBlacklistMode}
+                onValueChange={(value: boolean) => settings.isBlacklistMode = value}
+            />
+            <FormSection title="Exempted Users">
                 {settings.exempted?.length > 0 && <FlatList
                     data={settings.exempted}
                     keyExtractor={(item) => item}
                     renderItem={({ item }) => {
                         const user = UserStore.getUser(item);
+                        if (!user) throw new Error("User not found/is not cached");
 
                         return (<FormRow
                             label={user.username}
                             leading={<Image style={styles.avatar} source={{ uri: user.getAvatarURL() }} />}
                             trailing={<TouchableOpacity onPress={() => {
-                                storage.exempted = storage.exempted.filter((id) => id !== item);
+                                settings.exempted = settings.exempted.filter((id) => id !== item);
                             }}>
                                 <FormIcon source={getAssetIDByName("Small")} disableColor />
                             </TouchableOpacity>}
@@ -92,7 +99,10 @@ export default function Settings() {
                     }}
                     ItemSeparatorComponent={FormDivider}
                 />}
-                {shouldShowAdd && <AddRow onFinish={() => setShouldShowAdd(false)} />}
+                {shouldShowAdd && <>
+                    <FormDivider />
+                    <AddRow onFinish={() => setShouldShowAdd(false)} />
+                </>}
             </FormSection>
         </ScrollView>
     );
