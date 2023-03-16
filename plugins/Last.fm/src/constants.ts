@@ -1,7 +1,7 @@
 const Constants = {
     DEFAULT_APP_NAME: "Music",
     DEFAULT_TIME_INTERVAL: 5,
-    /** The application ID of the plugin */
+    /** The application ID of the Discord's developer app */
     APPLICATION_ID: "1054951789318909972",
     /** Last.fm api key */
     LFM_API_KEY: "615322f0047e12aedbc610d9d71f7430",

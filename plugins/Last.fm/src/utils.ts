@@ -1,4 +1,4 @@
-import { findByProps } from "@vendetta/metro";
+import { findByProps, findByStoreName } from "@vendetta/metro";
 import { FluxDispatcher } from "@vendetta/metro/common";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
@@ -6,6 +6,7 @@ import { currentSettings, global, verboseLog } from ".";
 import Constants from "./constants";
 
 const AssetManager = findByProps("getAssetIds");
+const PresenceStore = findByStoreName("PresenceStore");
 
 /** Fetches the latest user's scrobble */
 async function fetchLatestScrobble(): Promise<Track> {
@@ -96,6 +97,16 @@ async function update() {
         showToast("Last.fm username is not set!", getAssetIDByName("Small"));
         flush(); // Flush as we always need reinitialization
         throw new Error("Username is not set");
+    }
+
+    if (currentSettings.ignoreSpotify) {
+        for (const activity of PresenceStore.getActivities()) {
+            if (activity?.type === ActivityType.LISTENING && activity.application_id !== Constants.APPLICATION_ID) {
+                verboseLog("--> Spotify is currently playing, aborting...");
+                clearActivity();
+                return;
+            }
+        }
     }
 
     const lastTrack = await fetchLatestScrobble().catch(async (err) => {

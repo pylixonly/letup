@@ -12,6 +12,7 @@ export const global = {} as {
     lastTrackUrl?: string,
 };
 
+plugin.storage.ignoreSpotify ??= true;
 export const currentSettings = { ...plugin.storage } as PluginSettings;
 
 // Discord modules that we need

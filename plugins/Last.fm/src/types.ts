@@ -10,6 +10,8 @@ type PluginSettings = {
     timeInterval: number;
     /** Whether or not to show "Listening to" */
     listeningTo: boolean;
+    /** Ignore when Spotify is running */
+    ignoreSpotify: boolean;
     /** Whether or not to show verbose logging */
     verboseLogging: boolean;
 };
@@ -28,6 +30,13 @@ type Activity = {
     };
     assets?: ActivityAssets;
 };
+
+enum ActivityType {
+    PLAYING = 0,
+    STREAMING = 1,
+    LISTENING = 2,
+    COMPETING = 5
+}
 
 // The assets of the activity
 type ActivityAssets = {

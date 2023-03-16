@@ -87,6 +87,14 @@ export default function Settings() {
             />
             <FormDivider />
             <FormSwitchRow
+                label="Hide when Spotify is running"
+                subLabel="Hide the status when a Spotify activity is detected"
+                leading={<FormIcon source={getAssetIDByName("img_account_sync_spotify_light_and_dark")} />}
+                value={settings.ignoreSpotify}
+                onValueChange={(value: boolean) => settings.ignoreSpotify = value}
+            />
+            <FormDivider />
+            <FormSwitchRow
                 label="Verbose logging"
                 subLabel="Log more information to the console for debugging purposes"
                 leading={<FormIcon source={getAssetIDByName("pencil")} />}
