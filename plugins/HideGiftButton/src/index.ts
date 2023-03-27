@@ -1,17 +1,17 @@
 import { logger } from "@vendetta";
-import { findByDisplayName } from "@vendetta/metro";
+import { find } from "@vendetta/metro";
 
-let origState: boolean;
-const ChatInput = findByDisplayName("ChatInput");
+const ChatInput = find((m) => typeof m?.defaultProps?.hideGiftButton === "boolean");
 
 export default new class HideGiftButton {
+    origState: boolean;
     onLoad() {
         logger.log("Starting HideGiftButton...");
-        origState = ChatInput.defaultProps.hideGiftButton;
+        this.origState = ChatInput.defaultProps.hideGiftButton;
         ChatInput.defaultProps.hideGiftButton = true;
     }
     onUnload() {
         logger.log("Unloading HideGiftButton..");
-        ChatInput.defaultProps.hideGiftButton = origState;
+        ChatInput.defaultProps.hideGiftButton = this.origState;
     }
 };
