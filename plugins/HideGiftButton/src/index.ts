@@ -1,7 +1,7 @@
 import { logger } from "@vendetta";
-import { find } from "@vendetta/metro";
+import { findByName } from "@vendetta/metro";
 
-const ChatInput = find((m) => typeof m?.defaultProps?.hideGiftButton === "boolean");
+const ChatInput = findByName("ChatInput");
 
 export default new class HideGiftButton {
     origState: boolean;

@@ -54,7 +54,8 @@ async function buildPlugin(plugin) {
                     return id.substring(1).replace(/\//g, ".");
 
                 const map = {
-                    react: "window.React"
+                    "react": "window.React",
+                    "react-native": "globalThis.vendetta.metro.common.ReactNative"
                 };
 
                 return map[id] || null;
@@ -71,7 +72,12 @@ async function buildPlugin(plugin) {
             ].includes(warning.code) && console.warn(warning);
         },
         plugins: [
-            nodeResolve(),
+            nodeResolve({
+                resolveOnly: (id) => ![
+                    "react",
+                    "react-native"
+                ].includes(id)
+            }),
             commonjs(),
             {
                 name: "swc",
