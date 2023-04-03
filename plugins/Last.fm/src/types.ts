@@ -16,36 +16,12 @@ type PluginSettings = {
     verboseLogging: boolean;
 };
 
-// A type of an object that is returned by the Discord API after setting the activity
-type Activity = {
-    name: string;
-    application_id: string;
-    flags: number;
-    type: number;
-    details?: string;
-    state?: string;
-    timestamps?: {
-        start: number;
-        end?: number;
-    };
-    assets?: ActivityAssets;
-};
-
 enum ActivityType {
     PLAYING = 0,
     STREAMING = 1,
     LISTENING = 2,
     COMPETING = 5
 }
-
-// The assets of the activity
-type ActivityAssets = {
-    large_image?: string;
-    large_text?: string;
-} | {
-    small_image: string;
-    small_text?: string;
-};
 
 // Last.fm track
 type Track = {
