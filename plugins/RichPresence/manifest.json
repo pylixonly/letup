@@ -1,13 +1,6 @@
 {
     "name": "RichPresence",
     "description": "Sets Discord Rich Presence for your profile.",
-    "authors": [
-        {
-            "name": "amsyarasyiq",
-            "id": "492949202121261067"
-        }
-    ],
-    "main": "src/index.ts",
     "vendetta": {
         "icon": "games"
     }

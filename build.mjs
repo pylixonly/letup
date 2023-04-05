@@ -1,8 +1,7 @@
-/* eslint-disable indent */
 import commonjs from "@rollup/plugin-commonjs";
 import nodeResolve from "@rollup/plugin-node-resolve";
 import { createHash } from "crypto";
-import { readdirSync, readFileSync, writeFileSync } from "fs";
+import { readFile, readdir, writeFile } from "fs/promises";
 import { argv } from "process";
 import { rollup, watch } from "rollup";
 
@@ -16,7 +15,7 @@ const inputPlugins = args.filter(x => !x.startsWith("-"));
 const flags = args.map(x => x.toLowerCase()).filter(x => x.startsWith("-"));
 
 const isWatch = flags.includes("--watch") || flags.includes("-w");
-const toBuild = inputPlugins.length ? inputPlugins : readdirSync("./plugins");
+const toBuild = inputPlugins.length ? inputPlugins : await readdir("./plugins");
 
 console.log(`Building ${toBuild.length} plugin(s)...`);
 
@@ -40,7 +39,13 @@ console.log("\n" + (
 isWatch && console.log("\nWatching for changes...");
 
 async function buildPlugin(plugin) {
-    const manifest = JSON.parse(readFileSync(`./plugins/${plugin}/manifest.json`).toString());
+    if (plugin.endsWith(".ts")) return;
+
+    const manifest = Object.assign(
+        JSON.parse(await readFile("./base_manifest.json")),
+        JSON.parse(await readFile(`./plugins/${plugin}/manifest.json`))
+    );
+
     const entry = "index.js";
     const outPath = `./dist/${plugin}/${entry}`;
 
@@ -102,15 +107,17 @@ async function buildPlugin(plugin) {
         ]
     };
 
+    Object.assign(manifest, {
+        hash: createHash("sha256").update(await readFile(outPath)).digest("hex"),
+        main: entry
+    });
+
     if (!isWatch) {
         const bundle = await rollup(options);
         await bundle.write(options.output);
         await bundle.close();
 
-        const toHash = readFileSync(outPath);
-        manifest.hash = createHash("sha256").update(toHash).digest("hex");
-        manifest.main = "index.js";
-        writeFileSync(`./dist/${plugin}/manifest.json`, JSON.stringify(manifest));
+        await writeFile(`./dist/${plugin}/manifest.json`, JSON.stringify(manifest));
 
         console.log(`${plugin}: ` + "\x1b[32m" + "Build succeed!" + "\x1b[0m");
         return;
@@ -119,28 +126,22 @@ async function buildPlugin(plugin) {
     const watcher = watch(options);
 
     return await new Promise((resolve, reject) => {
-        watcher.on("event", (event) => {
+        watcher.on("event", async (event) => {
             switch (event.code) {
                 case "BUNDLE_END": {
                     event.result.close();
 
-                    const toHash = readFileSync(outPath);
-                    manifest.hash = createHash("sha256").update(toHash).digest("hex");
-                    manifest.main = "index.js";
-                    writeFileSync(`./dist/${plugin}/manifest.json`, JSON.stringify(manifest));
+                    await writeFile(`./dist/${plugin}/manifest.json`, JSON.stringify(manifest));
 
                     console.log(`${plugin}: ` + "\x1b[32m" + `Build succeed! (${event.duration}ms)` + "\x1b[0m");
                     resolve();
                     break;
                 }
                 case "ERROR":
-                    console.error(`${plugin}: ` + "\x1b[31m", "Failed! :(", "\x1b[0m");
-                    reject(event.error);
-                    break;
                 case "FATAL":
                     console.error(`${plugin}: ` + "\x1b[31m", "Failed! :(", "\x1b[0m");
                     reject(event.error);
-                    process.exit(1);
+                    break;
             }
         });
     });
