@@ -1,13 +1,14 @@
 import { findByStoreName } from "@vendetta/metro";
-import { NavigationNative, React, ReactNative, stylesheet } from "@vendetta/metro/common";
+import { NavigationNative, React, stylesheet } from "@vendetta/metro/common";
 import { useProxy } from "@vendetta/storage";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { Forms } from "@vendetta/ui/components";
-import { settings, SettingsSchema } from ".";
+import { useEffect, useState } from "react";
+import { FlatList, Image, ScrollView, TouchableOpacity } from "react-native";
+import { SettingsSchema, settings } from ".";
 
 const UserStore = findByStoreName("UserStore");
 
-const { ScrollView, TouchableOpacity, Image, FlatList } = ReactNative;
 const { FormInput, FormDivider, FormText, FormIcon, FormRow, FormSection, FormSwitchRow } = Forms;
 
 const styles = stylesheet.createThemedStyleSheet({
@@ -28,7 +29,7 @@ function AddButton({ callback }: { callback: () => void }) {
 }
 
 function AddRow({ onFinish }: { onFinish: () => void }) {
-    const [value, setValue] = React.useState("");
+    const [value, setValue] = useState("");
 
     const onPressCallback = () => {
         if (!isNaN(parseInt(value)) && UserStore.getUser(value) && !settings.exempted.includes(value)) {
@@ -61,10 +62,10 @@ function AddRow({ onFinish }: { onFinish: () => void }) {
 export default function Settings() {
     useProxy(settings) as SettingsSchema;
 
-    const [shouldShowAdd, setShouldShowAdd] = React.useState(false);
+    const [shouldShowAdd, setShouldShowAdd] = useState(false);
     const navigation = NavigationNative.useNavigation();
 
-    React.useEffect(() => {
+    useEffect(() => {
         navigation.setOptions({
             headerRight: () => <AddButton callback={() => setShouldShowAdd(true)} />
         });

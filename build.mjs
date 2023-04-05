@@ -73,10 +73,7 @@ async function buildPlugin(plugin) {
         },
         plugins: [
             nodeResolve({
-                resolveOnly: (id) => ![
-                    "react",
-                    "react-native"
-                ].includes(id)
+                resolveOnly: (id) => !["react", "react-native"].includes(id)
             }),
             commonjs(),
             {

@@ -1,4 +1,4 @@
-import { NavigationNative, React, ReactNative } from "@vendetta/metro/common";
+import { NavigationNative, React } from "@vendetta/metro/common";
 import { storage } from "@vendetta/plugin";
 import { useProxy } from "@vendetta/storage";
 import { getAssetIDByName } from "@vendetta/ui/assets";
@@ -9,7 +9,9 @@ import { currentSettings } from ".";
 import Constants from "./constants";
 import { initialize } from "./utils";
 
-const { ScrollView, TouchableOpacity, Text } = ReactNative;
+import { useEffect } from "react";
+import { ScrollView, Text, TouchableOpacity } from "react-native";
+
 const { FormInput, FormDivider, FormSwitchRow, FormText, FormIcon } = Forms;
 
 function UpdateButton() {
@@ -35,7 +37,7 @@ export default function Settings() {
     const settings = useProxy(storage) as PluginSettings;
     const navigation = NavigationNative.useNavigation();
 
-    React.useEffect(() => {
+    useEffect(() => {
         navigation.setOptions({
             title: "Last.fm Configuration",
             headerRight: UpdateButton
