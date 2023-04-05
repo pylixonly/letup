@@ -60,7 +60,7 @@ async function buildPlugin(plugin) {
 
                 const map = {
                     "react": "window.React",
-                    "react-native": "globalThis.vendetta.metro.common.ReactNative"
+                    "react-native": "vendetta.metro.common.ReactNative"
                 };
 
                 return map[id] || null;
@@ -107,7 +107,7 @@ async function buildPlugin(plugin) {
         ]
     };
 
-    Object.assign(manifest, {
+    const applyHash = async () => Object.assign(manifest, {
         hash: createHash("sha256").update(await readFile(outPath)).digest("hex"),
         main: entry
     });
@@ -117,6 +117,7 @@ async function buildPlugin(plugin) {
         await bundle.write(options.output);
         await bundle.close();
 
+        await applyHash();
         await writeFile(`./dist/${plugin}/manifest.json`, JSON.stringify(manifest));
 
         console.log(`${plugin}: ` + "\x1b[32m" + "Build succeed!" + "\x1b[0m");
@@ -131,6 +132,7 @@ async function buildPlugin(plugin) {
                 case "BUNDLE_END": {
                     event.result.close();
 
+                    await applyHash();
                     await writeFile(`./dist/${plugin}/manifest.json`, JSON.stringify(manifest));
 
                     console.log(`${plugin}: ` + "\x1b[32m" + `Build succeed! (${event.duration}ms)` + "\x1b[0m");
