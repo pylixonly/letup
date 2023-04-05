@@ -2,7 +2,7 @@ import { findByProps, findByStoreName } from "@vendetta/metro";
 import { FluxDispatcher } from "@vendetta/metro/common";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
-import { currentSettings, global, verboseLog } from ".";
+import { UserStore, currentSettings, global, verboseLog } from ".";
 import Constants from "./constants";
 
 const AssetManager = findByProps("getAssetIds");
@@ -100,7 +100,7 @@ async function update() {
     }
 
     if (currentSettings.ignoreSpotify) {
-        for (const activity of PresenceStore.getActivities()) {
+        for (const activity of PresenceStore.getActivities(UserStore.getCurrentUser().id)) {
             if (activity?.type === ActivityType.LISTENING && activity.application_id !== Constants.APPLICATION_ID) {
                 verboseLog("--> Spotify is currently playing, aborting...");
                 clearActivity();
