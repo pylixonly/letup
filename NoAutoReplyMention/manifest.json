@@ -1,1 +1,1 @@
-{"name":"NoAutoReplyMention","description":"Turns off auto mention when replying to someone.","authors":[{"name":"amsyarasyiq","id":"492949202121261067"}],"main":"index.js","vendetta":{"icon":"ic_notif_off"},"hash":"6d59ee54329291e2551dff69cb23ecf7cd00a029809b1d90cef62298f24176cf"}
+{"authors":[{"name":"pylix","id":"492949202121261067"}],"main":"index.js","name":"NoAutoReplyMention","description":"Turns off auto mention when replying to someone.","vendetta":{"icon":"ic_notif_off"},"hash":"7f06c65c6ccc4e8e912a5ecdeef2a56872662b918b48174034c38245f07d74f0"}

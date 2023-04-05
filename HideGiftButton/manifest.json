@@ -1,1 +1,1 @@
-{"name":"HideGiftButton","description":"Hides the gift button in the chat input.","authors":[{"name":"amsyarasyiq","id":"492949202121261067"}],"main":"index.js","vendetta":{"icon":"ic_gift_24px"},"hash":"ba830eb5cbcb461746d9d1ae7d97e2d0828fd127db7e3dcae3bbb77801103e01"}
+{"authors":[{"name":"pylix","id":"492949202121261067"}],"main":"index.js","name":"HideGiftButton","description":"Hides the gift button in the chat input.","vendetta":{"icon":"ic_gift_24px"},"hash":"ba830eb5cbcb461746d9d1ae7d97e2d0828fd127db7e3dcae3bbb77801103e01"}
