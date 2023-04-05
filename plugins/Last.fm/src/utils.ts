@@ -8,6 +8,13 @@ import Constants from "./constants";
 const AssetManager = findByProps("getAssetIds");
 const PresenceStore = findByStoreName("PresenceStore");
 
+enum ActivityType {
+    PLAYING = 0,
+    STREAMING = 1,
+    LISTENING = 2,
+    COMPETING = 5
+}
+
 /** Fetches the latest user's scrobble */
 async function fetchLatestScrobble(): Promise<Track> {
     const params = new URLSearchParams({

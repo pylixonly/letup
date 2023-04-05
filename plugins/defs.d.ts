@@ -24,3 +24,24 @@ type ActivityAssets = {
     small_image?: string;
     small_text?: string;
 };
+
+type LFMSettings = {
+    appName: string;
+    username: string;
+    showTimestamp: boolean;
+    timeInterval: number;
+    listeningTo: boolean;
+    ignoreSpotify: boolean;
+    verboseLogging: boolean;
+};
+
+type Track = {
+    name: string;
+    artist: string;
+    album: string;
+    albumArt: string;
+    url: string;
+    date: string;
+    nowPlaying: boolean;
+    loved: boolean;
+}

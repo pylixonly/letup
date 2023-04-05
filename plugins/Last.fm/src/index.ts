@@ -13,7 +13,7 @@ export const global = {} as {
 };
 
 plugin.storage.ignoreSpotify ??= true;
-export const currentSettings = { ...plugin.storage } as PluginSettings;
+export const currentSettings = { ...plugin.storage } as LFMSettings;
 
 // Discord modules that we need
 export const UserStore = findByStoreName("UserStore");

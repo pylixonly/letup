@@ -34,7 +34,7 @@ function UpdateButton() {
 }
 
 export default function Settings() {
-    const settings = useProxy(storage) as PluginSettings;
+    const settings = useProxy(storage) as LFMSettings;
     const navigation = NavigationNative.useNavigation();
 
     useEffect(() => {
