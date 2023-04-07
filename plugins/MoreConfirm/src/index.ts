@@ -18,23 +18,24 @@
 */
 
 import { logger, patcher } from "@vendetta";
-import { findByProps } from "@vendetta/metro";
+import { findByProps, findByStoreName } from "@vendetta/metro";
 
 const dialog = findByProps("show", "confirm", "close");
-const CallManager = findByProps("handleStartCall");
+const relationshipManager = findByProps("addRelationship");
+const callManager = findByProps("handleStartCall");
+const actionSheetManager = findByProps("hideActionSheet");
 
 export default new class MoreConfirm {
-    onLoad() {
-        // Patch voice/video calls
-        logger.log("MoreConfirm: patching calls...");
+    patches = [] as (() => void)[];
 
-        patcher.instead("handleStartCall", CallManager, (args, orig) => {
+    onLoad() {
+        this.patches.push(patcher.instead("handleStartCall", callManager, (args, orig) => {
             const [{ rawRecipients: [{ username, discriminator }, multiple] }, isVideo] = args;
             const action = isVideo ? "video call" : "call";
 
             // if `multiple` is defined, it's probably a group call
             dialog.show({
-                title: multiple ? `MoreConfirm: Start a group ${action}?` : `MoreConfirm: Start a ${action} with ${username}#${discriminator}?`,
+                title: multiple ? `Start a group ${action}?` : `Start a ${action} with ${username}#${discriminator}?`,
                 body: multiple ? "Are you sure you want to start the group call?" : `Are you sure you want to ${action} ${username}#${discriminator}?`,
                 confirmText: "Yes",
                 cancelText: "Cancel",
@@ -47,6 +48,40 @@ export default new class MoreConfirm {
                     }
                 },
             });
-        });
+        }));
+
+        this.patches.push(patcher.instead("addRelationship", relationshipManager, (args, orig) => {
+            if (typeof args[0] !== "object" || !args[0].userId) return orig.apply(this, args);
+            const { username, discriminator } = findByStoreName("UserStore").getUser(args[0].userId);
+
+            // This is hacky, but it *works*
+            const hideASInterval = setInterval(() => actionSheetManager.hideActionSheet(), 100);
+            setTimeout(() => clearInterval(hideASInterval), 3000);
+
+            const block = args[0].type === 2;
+            return new Promise(r => {
+                dialog.show({
+                    title: `${block ? "Block" : "Friend"} ${username}#${discriminator}?`,
+                    body: `Are you sure you want to ${block ? "block" : "friend"} ${username}#${discriminator}?`,
+                    confirmText: "Yes",
+                    cancelText: "Cancel",
+                    confirmColor: "brand",
+                    onConfirm: () => {
+                        try {
+                            r(orig.apply(this, args));
+                        } catch (e) {
+                            logger.error("Failed to add relationship", e);
+                        } finally {
+                            clearInterval(hideASInterval);
+                        }
+                    },
+                    onCancel: () => void clearInterval(hideASInterval)
+                });
+            });
+        }));
+    }
+
+    onUnload() {
+        for (const unpatch of this.patches) unpatch();
     }
 };
