@@ -29,7 +29,7 @@ type LFMSettings = {
     appName: string;
     username: string;
     showTimestamp: boolean;
-    timeInterval: number;
+    timeInterval: number | string;
     listeningTo: boolean;
     ignoreSpotify: boolean;
     verboseLogging: boolean;

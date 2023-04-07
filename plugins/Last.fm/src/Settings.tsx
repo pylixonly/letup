@@ -65,7 +65,7 @@ export default function Settings() {
             <FormDivider />
             <FormInput
                 value={settings.timeInterval}
-                onChangeText={(value: string) => settings.timeInterval = Number(value)}
+                onChangeText={(value: string) => settings.timeInterval = value}
                 title="Update interval (in seconds)"
                 placeholder={Constants.DEFAULT_TIME_INTERVAL.toString()}
                 keyboardType="numeric"

@@ -221,6 +221,6 @@ export async function initialize() {
                     flush();
                 }
             }),
-        (currentSettings.timeInterval || Constants.DEFAULT_TIME_INTERVAL) * 1000
+        (Number(currentSettings.timeInterval) || Constants.DEFAULT_TIME_INTERVAL) * 1000
     );
 }
