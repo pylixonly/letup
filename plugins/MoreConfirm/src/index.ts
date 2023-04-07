@@ -24,6 +24,7 @@ const dialog = findByProps("show", "confirm", "close");
 const relationshipManager = findByProps("addRelationship");
 const callManager = findByProps("handleStartCall");
 const actionSheetManager = findByProps("hideActionSheet");
+const UserStore = findByStoreName("UserStore");
 
 export default new class MoreConfirm {
     patches = [] as (() => void)[];
@@ -52,7 +53,7 @@ export default new class MoreConfirm {
 
         this.patches.push(patcher.instead("addRelationship", relationshipManager, (args, orig) => {
             if (typeof args[0] !== "object" || !args[0].userId) return orig.apply(this, args);
-            const { username, discriminator } = findByStoreName("UserStore").getUser(args[0].userId);
+            const { username, discriminator } = UserStore.getUser(args[0].userId);
 
             // This is hacky, but it *works*
             const hideASInterval = setInterval(() => actionSheetManager.hideActionSheet(), 100);
