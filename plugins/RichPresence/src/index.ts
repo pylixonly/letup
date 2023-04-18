@@ -1,10 +1,8 @@
-import { logger } from "@vendetta";
+import { logger, plugin } from "@vendetta";
 import { findByProps } from "@vendetta/metro";
 import { FluxDispatcher } from "@vendetta/metro/common";
-import { storage } from "@vendetta/plugin";
 import Settings from "./Settings";
-
-const AssetManager = findByProps("getAssetIds");
+import { cloneAndFilter } from "./utils";
 
 enum ActivityTypes {
     PLAYING = 0,
@@ -15,58 +13,51 @@ enum ActivityTypes {
     COMPETING = 5
 }
 
-// :nyaboom:
-function constructActivity() {
-    const activity: Activity = {
-        name: storage.app_name || "Discord",
-        application_id: storage.application_id || "1054951789318909972",
+const AssetManager = findByProps("getAssetIds");
+const pluginStartSince = Date.now();
+
+const storage = plugin.storage as typeof plugin.storage & {
+    selected: string;
+    selections: Record<string, Activity>;
+};
+
+if (!storage.selected) {
+    Object.assign(storage, {
+        selected: "default",
+        selections: {
+            default: createDefaultSelection()
+        }
+    });
+}
+
+function createDefaultSelection(): Activity {
+    return {
+        name: "Discord",
+        application_id: "1054951789318909972",
         flags: 0,
-        type: ActivityTypes.PLAYING, // PLAYING
-        state: storage.state,
-        details: storage.details
+        type: ActivityTypes.PLAYING,
+        timestamps: {
+            _enabled: false,
+            start: pluginStartSince
+        },
+        assets: {},
+        // @ts-ignore
+        buttons: [{}, {}]
     };
-
-    // Construct timestamps
-    if (storage.enable_timestamps) {
-        const timestamps = {} as any;
-
-        timestamps.start = Number(storage.start_timestamp) || Date.now();
-        if (!isNaN(storage.end_timestamp)) timestamps.end = Number(storage.end_timestamp);
-
-        activity.timestamps = timestamps;
-    }
-
-    // Construct assets
-    const assets = {} as ActivityAssets;
-
-    if (storage.large_image) {
-        assets.large_image = storage.large_image;
-        if (storage.large_image_text) assets.large_text = storage.large_image_text;
-    }
-
-    if (storage.small_image) {
-        assets.small_image = storage.small_image;
-        if (storage.small_image_text) assets.small_text = storage.small_image_text;
-    }
-
-    if (Object.keys(assets).length) activity.assets = assets;
-
-    // Construct buttons
-    if (storage.button1_text && storage.button1_URL) {
-        activity.buttons = [
-            { label: storage.button1_text, url: storage.button1_URL }
-        ];
-    }
-
-    if (storage.button2_text && storage.button2_URL) {
-        (activity.buttons ??= []).push({ label: storage.button2_text, url: storage.button2_URL });
-    }
-
-    return activity;
 }
 
 async function sendRequest(activity: Activity | null): Promise<Activity> {
     if (typeof activity !== "object") throw new Error("Invalid activity");
+
+    const timestampEnabled = activity?.timestamps?._enabled;
+    activity = cloneAndFilter(activity);
+
+    if (timestampEnabled) {
+        delete activity.timestamps._enabled;
+        activity.timestamps.start ||= pluginStartSince;
+    } else {
+        delete activity.timestamps;
+    }
 
     if (activity?.assets) {
         const [largeImage, smallImage] = await AssetManager.getAssetIds(activity.application_id, [activity.assets.large_image, activity.assets.small_image]);
@@ -76,18 +67,10 @@ async function sendRequest(activity: Activity | null): Promise<Activity> {
 
     if (activity?.buttons?.length) {
         activity.buttons = activity.buttons.filter(x => x.label && x.url);
-        Object.assign(activity, {
+        activity.buttons.length && Object.assign(activity, {
             metadata: { button_urls: activity.buttons.map(x => x.url) },
             buttons: activity.buttons.map(x => x.label)
         });
-    }
-
-    // validate activity
-    for (const k in activity) {
-        if (activity[k] === undefined || activity[k] === null) delete activity[k];
-        if (typeof activity[k].length === "number" && activity[k].length === 0) delete activity[k];
-        if (typeof activity[k] === "object" && Object.keys(activity[k]).length === 0) delete activity[k];
-        if (typeof activity[k] === "object" && activity[k].length === 0) delete activity[k];
     }
 
     FluxDispatcher.dispatch({
@@ -101,7 +84,9 @@ async function sendRequest(activity: Activity | null): Promise<Activity> {
 export default new class RichPresence {
     onLoad() {
         logger.log("Sending RPC request");
-        sendRequest(constructActivity()).catch().then(x => {
+
+        const currentActivity = storage.selections[storage.selected];
+        sendRequest(currentActivity).catch().then(x => {
             logger.log("RPC request sent");
             console.log(x);
         });

@@ -6,11 +6,12 @@ type Activity = {
     details?: string;
     state?: string;
     timestamps?: {
-        start: number;
-        end?: number;
+        _enabled: boolean;
+        start: number | string;
+        end?: number | string;
     };
-    assets?: ActivityAssets;
-    buttons?: ActivityButton[];
+    assets: ActivityAssets;
+    buttons: ActivityButton[];
 };
 
 type ActivityButton = {
