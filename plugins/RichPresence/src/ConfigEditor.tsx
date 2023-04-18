@@ -24,15 +24,15 @@ export default function ConfigEditor({ selection }: { selection: string }) {
     const settings = useProxy(storage.selections[selection]) as Activity;
 
     return (
-        <ScrollView>
-            <FormSection title="Basic">
-                <FormInput
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 38 }}>
+            <FormSection title="Basic" titleStyleType="no_border">
+                <FormInput required autoFocus
                     title="Application Name"
                     value={settings.name}
-                    placeholder="Vendetta"
+                    placeholder="Discord"
                     onChange={v => settings.name = v}
                 />
-                <FormInput
+                <FormInput required
                     title="Application ID"
                     value={settings.application_id}
                     placeholder="1054951789318909972"
@@ -100,7 +100,7 @@ export default function ConfigEditor({ selection }: { selection: string }) {
                     />}
                 />
                 <FormInput
-                    title="Start Timestamp (miliseconds)"
+                    title="Start Timestamp (milliseconds)"
                     value={settings.timestamps.start}
                     placeholder="1234567890"
                     disabled={!settings.timestamps._enabled}
@@ -108,7 +108,7 @@ export default function ConfigEditor({ selection }: { selection: string }) {
                     keyboardType="numeric"
                 />
                 <FormInput
-                    title="End Timestamp (miliseconds)"
+                    title="End Timestamp (milliseconds)"
                     value={settings.timestamps.end}
                     placeholder="1234567890"
                     disabled={!settings.timestamps._enabled}
@@ -122,10 +122,10 @@ export default function ConfigEditor({ selection }: { selection: string }) {
                     onPress={() => settings.timestamps.start = String(Date.now())}
                     trailing={FormRow.Arrow}
                 />
-                <FormText style={styles.subText}>
-                    Leaving start timestamp blank will use the time the Discord started.
-                </FormText>
             </FormSection>
+            <FormText style={styles.subText}>
+                Leaving start timestamp blank will use the time the Discord started.
+            </FormText>
             <FormSection title="Buttons">
                 <FormInput
                     title="First Button Text"

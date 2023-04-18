@@ -21,7 +21,7 @@ const storage = plugin.storage as typeof plugin.storage & {
     selections: Record<string, Activity>;
 };
 
-if (!storage.selected) {
+if (typeof storage.selected?.length !== "number") {
     Object.assign(storage, {
         selected: "default",
         selections: {
@@ -46,14 +46,13 @@ function createDefaultSelection(): Activity {
     };
 }
 
-async function sendRequest(activity: Activity | null): Promise<Activity> {
+async function sendRequest(activity: Activity | null): Promise<{ [K in keyof Activity]: any } & Record<string, any>> {
     if (typeof activity !== "object") throw new Error("Invalid activity");
 
     const timestampEnabled = activity?.timestamps?._enabled;
     activity = cloneAndFilter(activity);
 
     if (timestampEnabled) {
-        delete activity.timestamps._enabled;
         activity.timestamps.start ||= pluginStartSince;
     } else {
         delete activity.timestamps;
@@ -67,15 +66,19 @@ async function sendRequest(activity: Activity | null): Promise<Activity> {
 
     if (activity?.buttons?.length) {
         activity.buttons = activity.buttons.filter(x => x.label && x.url);
-        activity.buttons.length && Object.assign(activity, {
-            metadata: { button_urls: activity.buttons.map(x => x.url) },
-            buttons: activity.buttons.map(x => x.label)
-        });
+        activity.buttons.length
+            ? Object.assign(activity, {
+                metadata: { button_urls: activity.buttons.map(x => x.url) },
+                buttons: activity.buttons.map(x => x.label)
+            })
+            : delete activity.buttons;
     }
 
     FluxDispatcher.dispatch({
         type: "LOCAL_ACTIVITY_UPDATE",
-        activity: activity
+        activity: activity,
+        pid: 1608,
+        socketId: "RichPresence@Vendetta"
     });
 
     return activity;
@@ -86,10 +89,18 @@ export default new class RichPresence {
         logger.log("Sending RPC request");
 
         const currentActivity = storage.selections[storage.selected];
-        sendRequest(currentActivity).catch().then(x => {
-            logger.log("RPC request sent");
-            console.log(x);
-        });
+        if (!currentActivity) {
+            throw new Error("Selected activity does not exist");
+        }
+
+        sendRequest(currentActivity)
+            .then(x => {
+                logger.log("RPC request sent");
+                logger.log(x);
+            }).catch(e => {
+                logger.error("An error occured while sending RPC request :(");
+                logger.error(e?.stack ?? e);
+            });
     }
 
     onUnload() {
