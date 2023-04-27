@@ -81,7 +81,9 @@ function sendRequest(activity: Activity) {
 
     FluxDispatcher.dispatch({
         type: "LOCAL_ACTIVITY_UPDATE",
-        activity: activity
+        activity: activity,
+        pid: 2312,
+        socketId: "Last.fm@Vendetta"
     });
 }
 

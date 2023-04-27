@@ -59,9 +59,13 @@ async function sendRequest(activity: Activity | null): Promise<{ [K in keyof Act
     }
 
     if (activity?.assets) {
-        const [largeImage, smallImage] = await AssetManager.getAssetIds(activity.application_id, [activity.assets.large_image, activity.assets.small_image]);
-        activity.assets.large_image = largeImage;
-        activity.assets.small_image = smallImage;
+        const args = [activity.application_id, [activity.assets.large_image, activity.assets.small_image]];
+
+        let assetIds = AssetManager.getAssetIds(...args);
+        if (!assetIds.length) assetIds = await AssetManager.fetchAssetIds(...args);
+
+        activity.assets.large_image = assetIds[0];
+        activity.assets.small_image = assetIds[1];
     }
 
     if (activity?.buttons?.length) {
