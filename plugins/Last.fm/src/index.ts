@@ -17,7 +17,7 @@ export const currentSettings = { ...plugin.storage } as LFMSettings;
 
 // Discord modules that we need
 export const UserStore = findByStoreName("UserStore");
-export const SET_ACTIVITY = findByProps("SET_ACTIVITY").SET_ACTIVITY;
+export const { SET_ACTIVITY } = findByProps("SET_ACTIVITY");
 
 export const verboseLog = (...message: any) => currentSettings.verboseLogging && console.log(...message);
 

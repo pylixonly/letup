@@ -6,7 +6,7 @@ type Activity = {
     details?: string;
     state?: string;
     timestamps?: {
-        _enabled: boolean;
+        _enabled?: boolean;
         start: number | string;
         end?: number | string;
     };

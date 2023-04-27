@@ -5,7 +5,11 @@ import { showToast } from "@vendetta/ui/toasts";
 import { UserStore, currentSettings, global, verboseLog } from ".";
 import Constants from "./constants";
 
-const AssetManager = findByProps("getAssetIds");
+const AssetManager = findByProps("getAssetIds") as {
+    getAssetIds: (appId: string, ids: string[]) => string[];
+    fetchAssetIds: (appId: string, ids: string[]) => Promise<string[]>;
+    [key: PropertyKey]: any;
+};
 const PresenceStore = findByStoreName("PresenceStore");
 
 enum ActivityType {
@@ -82,15 +86,13 @@ function sendRequest(activity: Activity) {
 }
 
 /** Fetches a Discord application's asset */
-async function fetchAsset<T extends string | string[]>(asset: T, appId: string = Constants.APPLICATION_ID): Promise<T> {
-    if (!asset) return null;
+async function fetchAsset(asset: string[], appId: string = Constants.APPLICATION_ID): Promise<string[]> {
+    if (!asset) return [];
 
-    if (typeof asset === "string") {
-        const assetId = await AssetManager.getAssetIds(appId, [asset]);
-        return assetId[0] as T;
-    }
+    const assetIds = AssetManager.getAssetIds(appId, asset);
+    if (assetIds.length > 0) return assetIds;
 
-    return await AssetManager.getAssetIds(appId, asset);
+    return await AssetManager.fetchAssetIds(appId, asset);
 }
 
 /**
@@ -161,7 +163,7 @@ async function update() {
 
     if (lastTrack.album) {
         activity.assets = {
-            large_image: await fetchAsset(lastTrack.albumArt),
+            large_image: (await fetchAsset([lastTrack.albumArt]))[0],
             large_text: `on ${lastTrack.album}`
         };
     }
