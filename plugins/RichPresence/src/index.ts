@@ -13,7 +13,8 @@ enum ActivityTypes {
     COMPETING = 5
 }
 
-const AssetManager = findByProps("getAssetIds");
+const assetManager = findByProps("getAssetIds");
+
 const pluginStartSince = Date.now();
 
 const storage = plugin.storage as typeof plugin.storage & {
@@ -49,33 +50,37 @@ function createDefaultSelection(): Activity {
 async function sendRequest(activity: Activity | null): Promise<{ [K in keyof Activity]: any } & Record<string, any>> {
     if (typeof activity !== "object") throw new Error("Invalid activity");
 
-    const timestampEnabled = activity?.timestamps?._enabled;
-    activity = cloneAndFilter(activity);
+    if (activity) {
+        const timestampEnabled = activity?.timestamps?._enabled;
+        activity = cloneAndFilter(activity);
 
-    if (timestampEnabled) {
-        activity.timestamps.start ||= pluginStartSince;
-    } else {
-        delete activity.timestamps;
-    }
+        if (timestampEnabled) {
+            activity.timestamps.start ||= pluginStartSince;
+        } else {
+            delete activity.timestamps;
+        }
 
-    if (activity?.assets) {
-        const args = [activity.application_id, [activity.assets.large_image, activity.assets.small_image]];
+        if (activity.assets) {
+            const args = [activity.application_id, [activity.assets.large_image, activity.assets.small_image]];
 
-        let assetIds = AssetManager.getAssetIds(...args);
-        if (!assetIds.length) assetIds = await AssetManager.fetchAssetIds(...args);
+            let assetIds = assetManager.getAssetIds(...args);
+            if (!assetIds.length) assetIds = await assetManager.fetchAssetIds(...args);
 
-        activity.assets.large_image = assetIds[0];
-        activity.assets.small_image = assetIds[1];
-    }
+            activity.assets.large_image = assetIds[0];
+            activity.assets.small_image = assetIds[1];
+        }
 
-    if (activity?.buttons?.length) {
-        activity.buttons = activity.buttons.filter(x => x.label && x.url);
-        activity.buttons.length
-            ? Object.assign(activity, {
-                metadata: { button_urls: activity.buttons.map(x => x.url) },
-                buttons: activity.buttons.map(x => x.label)
-            })
-            : delete activity.buttons;
+        if (activity.buttons?.length) {
+            activity.buttons = activity.buttons.filter(x => x.label && x.url);
+            activity.buttons.length
+                ? Object.assign(activity, {
+                    metadata: { button_urls: activity.buttons.map(x => x.url) },
+                    buttons: activity.buttons.map(x => x.label)
+                })
+                : delete activity.buttons;
+        } else {
+            delete activity.buttons;
+        }
     }
 
     FluxDispatcher.dispatch({
