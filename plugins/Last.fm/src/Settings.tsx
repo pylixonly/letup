@@ -30,7 +30,6 @@ function UpdateButton() {
     return <TouchableOpacity onPress={onPressCallback}>
         <FormText style={{ marginRight: 12 }}>UPDATE</FormText>
     </TouchableOpacity>;
-
 }
 
 export default function Settings() {

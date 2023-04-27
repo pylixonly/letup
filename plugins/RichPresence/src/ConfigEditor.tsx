@@ -1,12 +1,17 @@
+
+import { findByProps, findByStoreName } from "@vendetta/metro";
 import { React, stylesheet } from "@vendetta/metro/common";
 import { storage } from "@vendetta/plugin";
 import { useProxy } from "@vendetta/storage";
 import { semanticColors } from "@vendetta/ui";
-import { Forms } from "@vendetta/ui/components";
+import { Button, Forms } from "@vendetta/ui/components";
 
 import { ScrollView } from "react-native";
 
 const { FormSection, FormInput, FormRow, FormSwitch, FormText } = Forms;
+
+const UserStore = findByStoreName("UserStore");
+const profiles = findByProps("showUserProfile");
 
 const styles = stylesheet.createThemedStyleSheet({
     subText: {
@@ -25,6 +30,16 @@ export default function ConfigEditor({ selection }: { selection: string }) {
 
     return (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 38 }}>
+            <Button
+                style={{ margin: 16 }}
+                color={"brand"}
+                size={Button.Sizes.MEDIUM}
+                look={Button.Looks.FILLED}
+                onPress={async () => {
+                    profiles.showUserProfile({ userId: UserStore.getCurrentUser().id });
+                }}
+                text="Preview your profile"
+            />
             <FormSection title="Basic" titleStyleType="no_border">
                 <FormInput required autoFocus
                     title="Application Name"
