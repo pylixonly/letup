@@ -6,6 +6,8 @@ const storage = plugin.storage as typeof plugin.storage & {
     selections: Record<string, Activity>;
 };
 
-export default () => (
-    <ConfigEditor selection={storage.selected} />
-)
+export default function Settings() {
+    return (
+        <ConfigEditor selection={storage.selected} />
+    );
+}
