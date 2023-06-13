@@ -1,0 +1,1 @@
+(function(t,n,r){"use strict";const e=n.findByProps("selectGIF"),c=r.instead("selectGIF",e,function(s){let[{url:u}]=s;return e.insertText(u)});return t.unLoad=c,t})({},vendetta.metro,vendetta.patcher);
