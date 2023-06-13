@@ -2,7 +2,8 @@
 	"scripts": {
 		"build": "node build.mjs",
 		"watch": "node build.mjs -w",
-		"lint": "eslint plugins"
+		"lint": "eslint plugins",
+		"make": "node make.mjs"
 	},
 	"devDependencies": {
 		"@rollup/plugin-commonjs": "^24.1.0",

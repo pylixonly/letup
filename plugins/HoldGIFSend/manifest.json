@@ -1,0 +1,7 @@
+{
+  "name": "HoldGIFSend",
+  "description": "Hold GIF links to chat input before sending them.",
+  "vendetta": {
+    "icon": "gif"
+  }
+}
