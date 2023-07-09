@@ -5,12 +5,11 @@ import { getAssetIDByName } from "@vendetta/ui/assets";
 import { Forms } from "@vendetta/ui/components";
 import { showToast } from "@vendetta/ui/toasts";
 
-import { currentSettings } from "..";
-import Constants from "../constants";
-import { initialize } from "../utils";
-
 import { FlatList, ScrollView, TouchableOpacity } from "react-native";
+import { currentSettings } from "..";
 import { LFMSettings } from "../../../defs";
+import Constants from "../constants";
+import { initialize } from "../manager";
 
 const { FormInput, FormDivider, FormSwitchRow, FormText, FormIcon, FormRow } = Forms;
 

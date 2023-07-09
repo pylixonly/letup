@@ -1,94 +1,18 @@
-import { FluxDispatcher } from "@vendetta/metro/common";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
-import { currentSettings, global, verboseLog } from ".";
-import { Activity, Track } from "../../defs";
+
+import { currentSettings, pluginState, verboseLog } from ".";
+import { Activity } from "../../defs";
 import Constants from "./constants";
-import { AssetManager, SelfPresenceStore } from "./modules";
+import { SelfPresenceStore } from "./modules";
+import { clearActivity, fetchAsset, sendRequest } from "./utils/activity";
+import { fetchLatestScrobble } from "./utils/lastfm";
 
 enum ActivityType {
     PLAYING = 0,
     STREAMING = 1,
     LISTENING = 2,
     COMPETING = 5
-}
-
-/** Fetches the latest user's scrobble */
-async function fetchLatestScrobble(): Promise<Track> {
-    const params = new URLSearchParams({
-        "method": "user.getrecenttracks",
-        "user": currentSettings.username,
-        "api_key": Constants.LFM_API_KEY,
-        "format": "json",
-        "limit": "1",
-        "extended": "1"
-    }).toString();
-
-    const result = await fetch(`https://ws.audioscrobbler.com/2.0/?${params}`);
-    if (!result.ok) throw new Error(`Failed to fetch the latest scrobble: ${result.statusText}`);
-
-    const info = await result.json();
-
-    const lastTrack = info?.recenttracks?.track?.[0];
-
-    if (!lastTrack) throw info;
-
-    return {
-        name: lastTrack.name,
-        artist: lastTrack.artist.name,
-        album: lastTrack.album["#text"],
-        albumArt: await handleAlbumCover(lastTrack.image?.find((x: any) => x.size === "large")?.["#text"]),
-        url: lastTrack.url,
-        date: lastTrack.date?.["#text"] ?? "now",
-        nowPlaying: Boolean(lastTrack["@attr"]?.nowplaying),
-        loved: lastTrack.loved === "1",
-    } as Track;
-}
-
-/** 
- * Currently ditches the default album covers 
- * @param cover The album cover given by Last.fm
-*/
-async function handleAlbumCover(cover: string): Promise<string> {
-    // If the cover is a default one, return null (remove the cover)
-    if (Constants.LFM_DEFAULT_COVER_HASHES.some(x => cover.includes(x))) {
-        return null;
-    }
-    return cover;
-}
-
-/** Clears the user's activity */
-function clearActivity() {
-    global.lastActivity && verboseLog("--> Clearing activity...");
-    return sendRequest(null);
-}
-
-/** Sends the activity details to Discord  */
-function sendRequest(activity: Activity) {
-    if (global.pluginStopped) {
-        console.log("--> Plugin is unloaded, aborting...");
-        global.updateInterval && clearInterval(global.updateInterval);
-        activity = null;
-    }
-
-    global.lastActivity = activity;
-
-    FluxDispatcher.dispatch({
-        type: "LOCAL_ACTIVITY_UPDATE",
-        activity: activity,
-        pid: 2312,
-        socketId: "Last.fm@Vendetta"
-    });
-}
-
-/** Fetches a Discord application's asset */
-async function fetchAsset(asset: string[], appId: string = Constants.APPLICATION_ID): Promise<string[]> {
-    if (!asset) return [];
-
-    const assetIds = AssetManager.getAssetIds(appId, asset);
-    if (assetIds.length > 0) return assetIds;
-
-    return await AssetManager.fetchAssetIds(appId, asset);
 }
 
 /**
@@ -127,7 +51,7 @@ async function update() {
 
     verboseLog("--> Track fetched!");
 
-    if (global.lastTrackUrl === lastTrack.url) {
+    if (pluginState.lastTrackUrl === lastTrack.url) {
         verboseLog("--> Last track is the same as the previous one, aborting...");
         return;
     }
@@ -141,7 +65,7 @@ async function update() {
         application_id: Constants.APPLICATION_ID,
     } as Activity;
 
-    global.lastTrackUrl = lastTrack.url;
+    pluginState.lastTrackUrl = lastTrack.url;
 
     if (activity.name.includes("{{")) {
         for (const key in lastTrack) {
@@ -180,10 +104,10 @@ async function update() {
 /** Stops and reset everything, can be started again with `initialize()` */
 export function flush() {
     console.log("--> Flushing...");
-    global.lastActivity = null;
-    global.lastTrackUrl = null;
+    pluginState.lastActivity = null;
+    pluginState.lastTrackUrl = null;
 
-    global.updateInterval && clearInterval(global.updateInterval);
+    pluginState.updateInterval && clearInterval(pluginState.updateInterval);
     clearActivity();
 }
 
@@ -191,7 +115,7 @@ export function flush() {
 export async function initialize() {
     console.log("--> Initializing...");
 
-    if (global.pluginStopped) {
+    if (pluginState.pluginStopped) {
         throw new Error("Plugin is already stopped!");
     }
 
@@ -205,7 +129,7 @@ export async function initialize() {
     });
 
     // Periodically fetches the current scrobble and sets the activity
-    global.updateInterval = setInterval(
+    pluginState.updateInterval = setInterval(
         () => update()
             .then(() => {
                 tries = 0;
