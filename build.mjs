@@ -68,6 +68,7 @@ async function buildPlugin(plugin) {
             format: "iife",
             compact: true,
             exports: "named",
+            inlineDynamicImports: true,
         },
         onwarn: (warning) => {
             ![

@@ -1,8 +1,9 @@
 import { plugin } from "@vendetta";
-import { findByProps, findByStoreName } from "@vendetta/metro";
 import { FluxDispatcher } from "@vendetta/metro/common";
 
-import Settings from "./Settings";
+import { Activity, LFMSettings } from "../../defs";
+import { UserStore } from "./modules";
+import Settings from "./pages/Settings";
 import { flush, initialize } from "./utils";
 
 export const global = {} as {
@@ -14,10 +15,6 @@ export const global = {} as {
 
 plugin.storage.ignoreSpotify ??= true;
 export const currentSettings = { ...plugin.storage } as LFMSettings;
-
-// Discord modules that we need
-export const UserStore = findByStoreName("UserStore");
-export const { SET_ACTIVITY } = findByProps("SET_ACTIVITY");
 
 export const verboseLog = (...message: any) => currentSettings.verboseLogging && console.log(...message);
 

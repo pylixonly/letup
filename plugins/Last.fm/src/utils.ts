@@ -1,16 +1,10 @@
-import { findByProps, findByStoreName } from "@vendetta/metro";
 import { FluxDispatcher } from "@vendetta/metro/common";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
-import { UserStore, currentSettings, global, verboseLog } from ".";
+import { currentSettings, global, verboseLog } from ".";
+import { Activity, Track } from "../../defs";
 import Constants from "./constants";
-
-const AssetManager = findByProps("getAssetIds") as {
-    getAssetIds: (appId: string, ids: string[]) => string[];
-    fetchAssetIds: (appId: string, ids: string[]) => Promise<string[]>;
-    [key: PropertyKey]: any;
-};
-const PresenceStore = findByStoreName("PresenceStore");
+import { AssetManager, SelfPresenceStore } from "./modules";
 
 enum ActivityType {
     PLAYING = 0,
@@ -43,7 +37,7 @@ async function fetchLatestScrobble(): Promise<Track> {
         name: lastTrack.name,
         artist: lastTrack.artist.name,
         album: lastTrack.album["#text"],
-        albumArt: await handleAlbumCover(lastTrack.image[3]["#text"]),
+        albumArt: await handleAlbumCover(lastTrack.image?.find((x: any) => x.size === "large")?.["#text"]),
         url: lastTrack.url,
         date: lastTrack.date?.["#text"] ?? "now",
         nowPlaying: Boolean(lastTrack["@attr"]?.nowplaying),
@@ -111,12 +105,11 @@ async function update() {
     }
 
     if (currentSettings.ignoreSpotify) {
-        for (const activity of PresenceStore.getActivities(UserStore.getCurrentUser().id)) {
-            if (activity?.type === ActivityType.LISTENING && activity.application_id !== Constants.APPLICATION_ID) {
-                verboseLog("--> Spotify is currently playing, aborting...");
-                clearActivity();
-                return;
-            }
+        const spotifyActivity = SelfPresenceStore.findActivity(act => act.sync_id);
+        if (spotifyActivity) {
+            verboseLog("--> Spotify is currently playing, aborting...");
+            clearActivity();
+            return;
         }
     }
 
@@ -142,7 +135,7 @@ async function update() {
     const activity = {
         name: currentSettings.appName || Constants.DEFAULT_APP_NAME,
         flags: 0,
-        type: currentSettings.listeningTo ? 2 : 0,
+        type: currentSettings.listeningTo ? ActivityType.LISTENING : ActivityType.PLAYING,
         details: lastTrack.name,
         state: `by ${lastTrack.artist}`,
         application_id: Constants.APPLICATION_ID,
