@@ -1,4 +1,4 @@
-type Activity = {
+export type Activity = {
     name: string;
     application_id: string;
     flags: number;
@@ -14,19 +14,19 @@ type Activity = {
     buttons: ActivityButton[];
 };
 
-type ActivityButton = {
+export type ActivityButton = {
     label: string;
     url: string;
 };
 
-type ActivityAssets = {
+export type ActivityAssets = {
     large_image?: string;
     large_text?: string;
     small_image?: string;
     small_text?: string;
 };
 
-type LFMSettings = {
+export type LFMSettings = {
     appName: string;
     username: string;
     showTimestamp: boolean;
@@ -36,7 +36,7 @@ type LFMSettings = {
     verboseLogging: boolean;
 };
 
-type Track = {
+export type Track = {
     name: string;
     artist: string;
     album: string;

@@ -10,18 +10,15 @@ export interface SettingsSchema {
     exempted: string[];
 }
 
-export const settings = storage as SettingsSchema;
+storage.isBlacklistMode ??= false;
+storage.exempted ??= [];
 
 const ReplyManager = findByProps("createPendingReply");
 
-settings.isBlacklistMode ??= false;
-settings.exempted ??= [];
-
-export default new class NoAutoReplyMention {
-    settings = Settings;
-
-    onUnload = patcher.before("createPendingReply", ReplyManager, ([arg]) => {
-        const isListed = settings.exempted.includes(arg.message?.author?.id);
-        arg.shouldMention &&= settings.isBlacklistMode ? !isListed : isListed;
-    });
+export default {
+    settings: Settings,
+    onUnload: patcher.before("createPendingReply", ReplyManager, ([arg]) => {
+        const isListed = storage.exempted.includes(arg.message?.author?.id);
+        arg.shouldMention &&= storage.isBlacklistMode ? !isListed : isListed;
+    })
 };

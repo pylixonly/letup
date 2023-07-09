@@ -1,17 +1,16 @@
-import { logger } from "@vendetta";
 import { findByName } from "@vendetta/metro";
 
 const ChatInput = findByName("ChatInput");
 
-export default new class HideGiftButton {
-    origState: boolean;
+// Object.defineProperty(ChatInput.defaultProps, "hideGiftButton", {
+//     get: () => plugins?.[plugin.id]?.enabled
+// });
+
+export default {
     onLoad() {
-        logger.log("Starting HideGiftButton...");
-        this.origState = ChatInput.defaultProps.hideGiftButton;
         ChatInput.defaultProps.hideGiftButton = true;
-    }
+    },
     onUnload() {
-        logger.log("Unloading HideGiftButton..");
-        ChatInput.defaultProps.hideGiftButton = this.origState;
+        ChatInput.defaultProps.hideGiftButton = false;
     }
 };
