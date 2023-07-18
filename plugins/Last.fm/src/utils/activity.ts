@@ -32,8 +32,5 @@ export function sendRequest(activity: Activity) {
 export async function fetchAsset(asset: string[], appId: string = Constants.APPLICATION_ID): Promise<string[]> {
     if (!asset) return [];
 
-    const assetIds = AssetManager.getAssetIds(appId, asset);
-    if (assetIds.length > 0) return assetIds;
-
     return await AssetManager.fetchAssetIds(appId, asset);
 }
