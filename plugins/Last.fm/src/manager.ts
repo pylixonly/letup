@@ -1,11 +1,12 @@
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 
-import { currentSettings, pluginState, verboseLog } from ".";
+import { currentSettings, pluginState } from ".";
 import { Activity } from "../../defs";
 import Constants from "./constants";
 import { SelfPresenceStore } from "./modules";
 import { clearActivity, fetchAsset, sendRequest } from "./utils/activity";
+import { setDebugInfo } from "./utils/debug";
 import { fetchLatestScrobble } from "./utils/lastfm";
 
 enum ActivityType {
@@ -15,11 +16,19 @@ enum ActivityType {
     COMPETING = 5
 }
 
+const verboseLog = (...message: any) => currentSettings.verboseLogging && console.log(...message);
+
 /**
  * Fetches the current scrobble and sets the activity. 
  * This function is actively called by the updateInterval.
  */
 async function update() {
+    if (pluginState.pluginStopped) {
+        verboseLog("--> Plugin is unloaded, aborting update()...");
+        flush();
+        return;
+    }
+
     verboseLog("--> Fetching last track...");
 
     if (!currentSettings.username) {
@@ -32,9 +41,13 @@ async function update() {
         const spotifyActivity = SelfPresenceStore.findActivity(act => act.sync_id);
         if (spotifyActivity) {
             verboseLog("--> Spotify is currently playing, aborting...");
+            setDebugInfo("isSpotifyIgnored", true);
+
             clearActivity();
             return;
-        }
+        } else setDebugInfo("isSpotifyIgnored", false);
+    } else {
+        setDebugInfo("isSpotifyIgnored", undefined);
     }
 
     const lastTrack = await fetchLatestScrobble().catch(async (err) => {
@@ -42,6 +55,8 @@ async function update() {
         clearActivity();
         throw err;
     });
+
+    setDebugInfo("lastTrack", lastTrack);
 
     if (!lastTrack.nowPlaying) {
         verboseLog("--> Last track is not currently playing, aborting...");
@@ -81,13 +96,16 @@ async function update() {
     }
 
     if (lastTrack.album) {
+        const asset = await fetchAsset([lastTrack.albumArt]);
+
         activity.assets = {
-            large_image: (await fetchAsset([lastTrack.albumArt]))[0],
+            large_image: asset[0],
             large_text: `on ${lastTrack.album}`
         };
     }
 
     verboseLog("--> Setting activity...");
+    setDebugInfo("lastActivity", activity);
     verboseLog(activity);
 
     try {
@@ -102,19 +120,16 @@ async function update() {
 }
 
 /** Stops and reset everything, can be started again with `initialize()` */
-export function flush() {
-    console.log("--> Flushing...");
+export function flush(isClearActivity = false) {
     pluginState.lastActivity = null;
     pluginState.lastTrackUrl = null;
 
     pluginState.updateInterval && clearInterval(pluginState.updateInterval);
-    clearActivity();
+    !isClearActivity && clearActivity();
 }
 
 /** Initializes the plugin */
 export async function initialize() {
-    console.log("--> Initializing...");
-
     if (pluginState.pluginStopped) {
         throw new Error("Plugin is already stopped!");
     }

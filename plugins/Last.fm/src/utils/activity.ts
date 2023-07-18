@@ -1,21 +1,20 @@
 import { FluxDispatcher } from "@vendetta/metro/common";
 
-import { pluginState, verboseLog } from "..";
+import { pluginState } from "..";
 import { Activity } from "../../../defs";
 import Constants from "../constants";
+import { flush } from "../manager";
 import { AssetManager } from "../modules";
 
 /** Clears the user's activity */
 export function clearActivity() {
-    pluginState.lastActivity && verboseLog("--> Clearing activity...");
     return sendRequest(null);
 }
 
 /** Sends the activity details to Discord  */
 export function sendRequest(activity: Activity) {
     if (pluginState.pluginStopped) {
-        console.log("--> Plugin is unloaded, aborting...");
-        pluginState.updateInterval && clearInterval(pluginState.updateInterval);
+        flush(true);
         activity = null;
     }
 

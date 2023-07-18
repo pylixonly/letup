@@ -1,6 +1,7 @@
 import { currentSettings } from "..";
 import { Track } from "../../../defs";
 import Constants from "../constants";
+import { setDebugInfo } from "./debug";
 
 /** Fetches the latest user's scrobble */
 export async function fetchLatestScrobble(): Promise<Track> {
@@ -19,6 +20,7 @@ export async function fetchLatestScrobble(): Promise<Track> {
     const info = await result.json();
 
     const lastTrack = info?.recenttracks?.track?.[0];
+    setDebugInfo("lastAPIResponse", lastTrack);
 
     if (!lastTrack) throw info;
 
