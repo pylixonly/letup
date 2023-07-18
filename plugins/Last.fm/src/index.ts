@@ -1,10 +1,10 @@
 import { plugin } from "@vendetta";
 import { FluxDispatcher } from "@vendetta/metro/common";
 
+import { lazy } from "react";
 import { Activity, LFMSettings } from "../../defs";
 import { flush, initialize } from "./manager";
 import { UserStore } from "./modules";
-import Settings from "./ui/pages/Settings";
 
 export const pluginState = {} as {
     pluginStopped?: boolean,
@@ -17,7 +17,7 @@ plugin.storage.ignoreSpotify ??= true;
 export const currentSettings = { ...plugin.storage } as LFMSettings;
 
 export default {
-    settings: Settings,
+    settings: lazy(() => import("./ui/pages/Settings")),
     onLoad() {
         pluginState.pluginStopped = false;
 
