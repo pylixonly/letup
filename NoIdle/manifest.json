@@ -1,1 +1,1 @@
-{"authors":[{"name":"pylix","id":"492949202121261067"}],"main":"index.js","name":"NoIdle","description":"Prevent status from idling when Discord is in the background.","vendetta":{"icon":"StatusIdle"},"hash":"65f8433e59b46edc78b3b7ed188f860b6091857660dff990931b1be3d19bb8e6"}
+{"authors":[{"name":"pylix","id":"492949202121261067"}],"main":"index.js","name":"NoIdle","description":"Prevent status from idling when Discord is in the background.","vendetta":{"icon":"StatusIdle"},"hash":"477734b6a288567c5ce4439ca1e1dec77b369106ab8ea4993db308bf2261a17c"}
