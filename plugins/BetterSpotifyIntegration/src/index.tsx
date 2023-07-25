@@ -9,7 +9,7 @@ let sectionPatch: () => void;
 export default {
     onLoad() {
         sectionPatch = before("default", findByName("UserProfileSection", false), ([props]) => {
-            if (props?.title?.includes?.("Spotify") || props.activity.type !== 2) return;
+            if (props?.title?.includes?.("Spotify") || props?.activity?.type !== 2) return;
 
             const spotifyElement = findInReactTree(props.children, e => e?.style?.padding === 0);
             const actionsIndex = spotifyElement?.children?.findIndex?.(e => e?.type?.name === "Actions");

@@ -8,12 +8,13 @@ const SpotifyStore = findByStoreName("SpotifyStore");
 const Button = findByProps("Sizes", "Looks") as any;
 const SpotifySyncUtil = findByProps("play", "sync");
 
-interface ListenAlongButtonProps {
+type ListenAlongButtonProps = Partial<{
     activity: any;
     user: any;
     isCurrentUser: boolean;
     activityButtonColor: string;
-}
+    [key: string]: any;
+}>
 
 export default function ListenAlongButton(props: ListenAlongButtonProps) {
     const currentPartyId = FluxUtils.useStateFromStores([SpotifyStore], () => SpotifyStore.getActivity()?.party?.id);
