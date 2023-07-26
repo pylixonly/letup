@@ -1,4 +1,5 @@
 import { findByName } from "@vendetta/metro";
+import { i18n } from "@vendetta/metro/common";
 import { before } from "@vendetta/patcher";
 import { findInReactTree } from "@vendetta/utils";
 
@@ -8,8 +9,10 @@ let sectionPatch: () => void;
 
 export default {
     onLoad() {
+        const getListeningHeader = () => i18n.Messages.USER_ACTIVITY_HEADER_LISTENING?.intlMessage?.format({ name: "Spotify" });
+
         sectionPatch = before("default", findByName("UserProfileSection", false), ([props]) => {
-            if (props?.title?.includes?.("Spotify") || props?.activity?.type !== 2) return;
+            if (props.title !== getListeningHeader()) return;
 
             const spotifyElement = findInReactTree(props.children, e => e?.style?.padding === 0);
             const actionsIndex = spotifyElement?.children?.findIndex?.(e => e?.type?.name === "Actions");
