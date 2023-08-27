@@ -13,6 +13,8 @@ export interface SettingsSchema {
 storage.isBlacklistMode ??= false;
 storage.exempted ??= [];
 
+export const settings = storage as SettingsSchema;
+
 const ReplyManager = findByProps("createPendingReply");
 
 export default {
