@@ -3,6 +3,6 @@
     "editor.formatOnSave": true,
     "files.insertFinalNewline": true,
     "editor.codeActionsOnSave": {
-        "source.organizeImports": true,
+        "source.organizeImports": "explicit"
     },
 }
