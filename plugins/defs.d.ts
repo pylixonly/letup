@@ -34,6 +34,7 @@ export type LFMSettings = {
     listeningTo: boolean;
     ignoreSpotify: boolean;
     verboseLogging: boolean;
+    altActivityName: boolean;
 };
 
 export type Track = {

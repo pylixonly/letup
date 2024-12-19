@@ -72,7 +72,7 @@ async function update() {
     }
 
     const activity = {
-        name: currentSettings.appName || Constants.DEFAULT_APP_NAME,
+        name: currentSettings.altActivityName ? `${lastTrack.artist} - ${lastTrack.name}` : (currentSettings.appName || Constants.DEFAULT_APP_NAME),
         flags: 0,
         type: currentSettings.listeningTo ? ActivityType.LISTENING : ActivityType.PLAYING,
         details: lastTrack.name,

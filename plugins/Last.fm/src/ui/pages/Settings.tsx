@@ -87,6 +87,14 @@ export default React.memo(function Settings() {
             />
             <FormDivider />
             <FormSwitchRow
+                label="Use alternate activity name"
+                subLabel='Use "artist - songname" as activity name instead of the set Application Name'
+                leading={<FormIcon source={getAssetIDByName("ic_information_24px")} />}
+                value={settings.altActivityName}
+                onValueChange={(value: boolean) => settings.altActivityName = value}
+            />
+            <FormDivider />
+            <FormSwitchRow
                 label="Hide when Spotify is running"
                 subLabel="Hide the status when a Spotify activity is detected"
                 leading={<FormIcon source={getAssetIDByName("img_account_sync_spotify_light_and_dark")} />}
